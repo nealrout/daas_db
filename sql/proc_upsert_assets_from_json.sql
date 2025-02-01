@@ -1,10 +1,13 @@
+DROP FUNCTION IF EXISTS upsert_assets_from_json(TEXT);
+
 CREATE OR REPLACE FUNCTION upsert_assets_from_json(json_string TEXT)
-RETURNS VOID AS '
+RETURNS INTEGER AS '
 DECLARE
     asset_record JSONB;
     asset JSONB;
 	unknown_fac_id bigint;
 	calc_fac_id bigint;
+    rows_affected INTEGER := 0;
 	/* TEST INPUT
 	json_string TEXT := ''[
     {"fac_code": "US_TEST_99", "asset_id": "asset_30", "sys_id": "system_30"},
@@ -41,7 +44,9 @@ BEGIN
         	fac_id = calc_fac_id,  
         	sys_id = EXCLUDED.sys_id,
         	update_ts = now();
+        rows_affected := rows_affected + 1;
     END LOOP;
+    RETURN rows_affected;
 END; 
 ' LANGUAGE plpgsql;
 

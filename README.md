@@ -7,11 +7,14 @@ This project contains the liquibase scripts to build and underlying PostgreSQL d
 
 ## Table of Contents
 
+- [Requirements](#requirements)
 - [Miscellaneous](#miscellaneous)
 - [Usage](#usage)
 - [Features](#features)
 - [Contact](#contact)
 
+## Requirements
+PostgreSQL
 ## Miscellaneous
 For postgresql anonomous blocks to work we have to make the following substitutions in the .sql files
 

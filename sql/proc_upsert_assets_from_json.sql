@@ -5,8 +5,8 @@ RETURNS INTEGER AS '
 DECLARE
     asset_record JSONB;
     asset JSONB;
-	unknown_fac_id bigint;
-	calc_fac_id bigint;
+	unknown_fac_id int;
+	calc_fac_id int;
     rows_affected INTEGER := 0;
 	/* TEST INPUT
 	json_string TEXT := ''[

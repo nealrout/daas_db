@@ -41,10 +41,10 @@ If the DaaS database does not exist yet, you must create it with a password that
 
 #
     Initialization
-        liquibase update --contexts=init
+        liquibase update --contexts=init --username=UPDATEME --password=UPDATEME
 
     Migration
-        liquibase update --contexts=update
+        liquibase update --contexts=update --username=UPDATEME --password=UPDATEME
 
 
 ## Features

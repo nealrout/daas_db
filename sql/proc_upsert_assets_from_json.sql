@@ -1,5 +1,5 @@
-DROP FUNCTION IF EXISTS upsert_assets_from_json(TEXT);
-
+CALL drop_functions_by_name('upsert_assets_from_json');
+/
 CREATE OR REPLACE FUNCTION upsert_assets_from_json(json_string TEXT)
 RETURNS INTEGER AS '
 DECLARE
@@ -49,4 +49,4 @@ BEGIN
     RETURN rows_affected;
 END; 
 ' LANGUAGE plpgsql;
-
+/

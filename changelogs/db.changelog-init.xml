@@ -32,7 +32,15 @@
     </changeSet>
 
     <changeSet id="7" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/proc_upsert_assets_from_json.sql" endDelimiter=";"/>
+        <sqlFile path="sql/proc_util.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="8" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/proc_upsert_assets_from_json.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="9" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/proc_asset.sql" endDelimiter="/"/>
     </changeSet>
 
 </databaseChangeLog>

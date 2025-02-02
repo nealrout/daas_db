@@ -1,12 +1,41 @@
 # daas_db
 
-To run migration execute below command
+## Description
+
+This project contains the liquibase scripts to build and underlying daas database.  This database stores facility, asset, etc. information for DaaS that will be fetched through Django apis.  We are adding functions and procedures so we can control the CRUD operations at the DBMS level.
+
+
+## Table of Contents
+
+- [Miscellaneous](#miscellaneous)
+- [Usage](#usage)
+- [Features](#features)
+- [Contact](#contact)
+
+## Miscellaneous
+For postgresql anonomous blocks to work we have to make the following substitutions in the .sql files
+
+- From
+  - '
+- To
+  - ''
+- From
+  - \$$
+- To
+  - '
+
+## Usage
     Initialization
         liquibase update --contexts=init
 
     Migration
         liquibase update --contexts=update
 
-For postgresql anonomous blocks to work we have to substitute single quotes ' to two single quotes ''.
-And double dollar sign $$ to single quotes '
 
+## Features
+- Facility table
+- Asset table and functions to allow DBMS control over CRUD operations.
+
+## Contact
+Neal Routson  
+nroutson@gmail.com

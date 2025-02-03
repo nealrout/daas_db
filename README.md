@@ -14,7 +14,9 @@ This project contains the liquibase scripts to build and underlying PostgreSQL d
 - [Contact](#contact)
 
 ## Requirements
-PostgreSQL
+PostgreSQL - https://www.postgresql.org/download/
+
+Liquibase CLI (open source)- https://www.liquibase.com/download
 ## Miscellaneous
 For postgresql anonomous blocks to work we have to make the following substitutions in the .sql files
 

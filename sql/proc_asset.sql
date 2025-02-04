@@ -1,7 +1,7 @@
-CALL drop_functions_by_name('get_all_assets');
+CALL drop_functions_by_name('get_assets');
 /
 -- Stored procedure to get all items
-CREATE OR REPLACE FUNCTION get_all_assets()
+CREATE OR REPLACE FUNCTION get_assets()
 RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS '
 BEGIN
     RETURN QUERY
@@ -52,15 +52,40 @@ END;
 /
 CALL drop_functions_by_name('get_asset_by_id');
 /
--- Stored procedure to retrieve an asset by ID
-CREATE OR REPLACE FUNCTION get_asset_by_id(p_id INT)
-RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS '
+-- -- Stored procedure to retrieve an asset by ID
+-- CREATE OR REPLACE FUNCTION get_asset_by_id(p_id INT)
+-- RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS '
+-- BEGIN
+--     RETURN QUERY
+--     SELECT asset.id, asset.asset_id, asset.sys_id, facility.fac_code 
+--     FROM daas.asset asset
+--     JOIN daas.facility facility ON asset.fac_id  = facility.id
+--     WHERE asset.id = p_id;  
+-- END;
+-- ' LANGUAGE plpgsql;
+-- /
+CREATE OR REPLACE FUNCTION daas.get_asset_by_ids(p_ids jsonb)
+  RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250))
+AS '
+DECLARE
 BEGIN
-    RETURN QUERY
-    SELECT asset.id, asset.asset_id, asset.sys_id, facility.fac_code 
-    FROM daas.asset asset
-    JOIN daas.facility facility ON asset.fac_id  = facility.id
-    WHERE asset.id = p_id;  
+  CREATE TEMP TABLE temp_ids (id integer);
+  
+  -- Insert the parsed list of IDs into the temporary table
+  INSERT INTO temp_ids(id)
+  SELECT id_text::integer 
+  FROM jsonb_array_elements_text(p_ids) AS id_text(id_text)
+  WHERE id_text IS NOT NULL;
+
+  -- Return the query using the temporary table for the join
+  RETURN QUERY
+  SELECT asset.id, asset.asset_id, asset.sys_id, facility.fac_code
+  FROM daas.asset asset
+  JOIN daas.facility facility ON asset.fac_id = facility.id
+  JOIN temp_ids ON asset.id = temp_ids.id;
+
+  -- Clean up the temporary table after the query
+  DROP TABLE IF EXISTS temp_ids;
 END;
 ' LANGUAGE plpgsql;
 /

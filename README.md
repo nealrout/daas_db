@@ -1,5 +1,8 @@
 # daas_db
 
+## Project
+
+Refrence of DaaS Project - https://github.com/nealrout/daas_docs
 ## Description
 
 This project contains the liquibase scripts to build and underlying PostgreSQL daas database.  This database stores facility, asset, etc. information for DaaS that will be fetched through Django apis.  We are adding functions and procedures so we can control the CRUD operations at the DBMS level.

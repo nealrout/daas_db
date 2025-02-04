@@ -21,7 +21,7 @@ PostgreSQL - https://www.postgresql.org/download/
 
 Liquibase CLI (open source)- https://www.liquibase.com/download
 ## Miscellaneous
-For postgresql anonomous blocks to work we have to make the following substitutions in the .sql files
+For postgresql anonymous blocks to work we have to make the following substitutions in the .sql files
 
 - From
   - '

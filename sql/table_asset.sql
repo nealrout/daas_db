@@ -5,8 +5,8 @@ create table if not exists daas.asset (
     fac_id int not null,
     asset_id varchar(250) not null,
     sys_id varchar(250) null,
-    create_ts timestamp,
-    update_ts timestamp
+    create_ts timestamptz,
+    update_ts timestamptz default now()
 );
 
 ALTER TABLE daas.asset

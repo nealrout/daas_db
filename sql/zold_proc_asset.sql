@@ -50,20 +50,9 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 /
-CALL drop_functions_by_name('get_asset_by_id');
+CALL drop_functions_by_name('get_asset_by_ids');
 /
--- -- Stored procedure to retrieve an asset by ID
--- CREATE OR REPLACE FUNCTION get_asset_by_id(p_id INT)
--- RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS '
--- BEGIN
---     RETURN QUERY
---     SELECT asset.id, asset.asset_id, asset.sys_id, facility.fac_code 
---     FROM daas.asset asset
---     JOIN daas.facility facility ON asset.fac_id  = facility.id
---     WHERE asset.id = p_id;  
--- END;
--- ' LANGUAGE plpgsql;
--- /
+-- Stored procedure to get an asset by ID
 CREATE OR REPLACE FUNCTION daas.get_asset_by_ids(p_ids jsonb)
   RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250))
 AS '

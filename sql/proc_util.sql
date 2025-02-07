@@ -13,8 +13,7 @@ BEGIN
         EXECUTE ''DROP FUNCTION '' || func.proname || ''('' || func.args || '')'';
     END LOOP;
 END ';
-
-
+/
 CREATE OR REPLACE PROCEDURE drop_procedures_by_name(proc_name VARCHAR)
 LANGUAGE plpgsql AS '
 DECLARE
@@ -28,3 +27,4 @@ BEGIN
         EXECUTE ''DROP PROCEDURE '' || proc.proname || ''('' || proc.args || '')'';
     END LOOP;
 END ';
+/

@@ -1,3 +1,4 @@
+-- This is not really required now, as the facility domain is loaded through Django into the facility_facility table
 insert into daas.facility (fac_code, fac_name, create_ts) values ('US_TEST_01', 'TEST FACILITY 1', now());
 insert into daas.facility (fac_code, fac_name, create_ts) values ('US_TEST_02', 'TEST FACILITY 2', now());
 insert into daas.facility (fac_code, fac_name, create_ts) values ('US_TEST_03', 'TEST FACILITY 3', now());

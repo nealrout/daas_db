@@ -6,7 +6,7 @@ RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCH
 BEGIN
     RETURN QUERY
     SELECT asset.id, asset.asset_id, asset.sys_id, facility.fac_code FROM daas.asset asset
-    JOIN daas.facility facility on asset.fac_id = facility.id;
+    JOIN daas.facility_facility facility on asset.fac_id = facility.id;
 END;
 ' LANGUAGE plpgsql;
 /
@@ -34,12 +34,12 @@ BEGIN
 	FROM get_jsonb_values_by_key (p_jsonb, ''sys_id'') k
 	JOIN daas.asset a ON k.value = a.asset_id
 	) sub
-	JOIN daas.facility f ON sub.fac_id = f.id
+	JOIN daas.facility_facility f ON sub.fac_id = f.id
 	LEFT JOIN get_jsonb_values_by_key (p_jsonb, ''fac_code'') k on f.fac_code = k.value
 	UNION
 	SELECT a.id, a.asset_id, a.sys_id, f.fac_code
 	FROM daas.asset a
-	JOIN daas.facility f on a.fac_id = f.Id
+	JOIN daas.facility_facility f on a.fac_id = f.Id
 	JOIN get_jsonb_values_by_key (p_jsonb, ''fac_code'') k on f.fac_code = k.value;
 END;
 ' LANGUAGE plpgsql;
@@ -62,7 +62,7 @@ BEGIN
 	);
 
     SELECT f.id INTO unknown_fac_id
-    FROM daas.facility f
+    FROM daas.facility_facility f
     WHERE upper(f.fac_code) = ''UNKNOWN'';
 
 	INSERT INTO temp_json_data (id, asset_id, sys_id, fac_code)
@@ -74,9 +74,9 @@ BEGIN
 	FROM jsonb_array_elements(p_jsonb_in::JSONB) AS p_jsonb;
 
 	UPDATE temp_json_data
-	SET fac_id = COALESCE(daas.facility.id, unknown_fac_id)
-	FROM daas.facility
-	WHERE UPPER(temp_json_data.fac_code) = UPPER(daas.facility.fac_code);
+	SET fac_id = COALESCE(daas.facility_facility.id, unknown_fac_id)
+	FROM daas.facility_facility
+	WHERE UPPER(temp_json_data.fac_code) = UPPER(daas.facility_facility.fac_code);
 	
 
 	-- Perform UPSERT: Insert new records or update existing ones
@@ -97,7 +97,7 @@ BEGIN
     RETURN QUERY 
     SELECT a.id, a.asset_id, a.sys_id, f.fac_code
     FROM daas.asset a
-    JOIN daas.facility f ON a.fac_id = f.id
+    JOIN daas.facility_facility f ON a.fac_id = f.id
 	JOIN temp_json_data t ON a.id = t.id;
 END;
 

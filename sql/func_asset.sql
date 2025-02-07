@@ -2,7 +2,7 @@ CALL drop_functions_by_name('get_assets');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_assets()
-RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS '
+RETURNS TABLE(id BIGINT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS '
 BEGIN
     RETURN QUERY
     SELECT asset.id, asset.asset_id, asset.sys_id, facility.fac_code FROM daas.asset asset
@@ -24,7 +24,7 @@ BEGIN
 	(
 	SELECT a.id, a.asset_id, a.sys_id, a.fac_id
 	FROM get_jsonb_values_by_key (p_jsonb, ''id'') k
-	JOIN daas.asset a ON k.value::int = a.id
+	JOIN daas.asset a ON k.value::bigint = a.id
 	UNION
 	SELECT a.id, a.asset_id, a.sys_id, a.fac_id
 	FROM get_jsonb_values_by_key (p_jsonb, ''asset_id'') k
@@ -49,16 +49,16 @@ CALL drop_functions_by_name('asset_upsert_from_json');
 CREATE OR REPLACE FUNCTION asset_upsert_from_json(
     p_jsonb_in jsonb
 ) 
-RETURNS TABLE(id INT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS ' 
+RETURNS TABLE(id BIGINT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS ' 
 DECLARE
-	unknown_fac_id integer;
+	unknown_fac_id bigint;
 BEGIN
 	CREATE TEMP TABLE temp_json_data (
-	    id INT,
+	    id BIGINT,
 	    asset_id TEXT,
 	    sys_id TEXT,
 	    fac_code TEXT,
-	    fac_id INT
+	    fac_id BIGINT
 	);
 
     SELECT f.id INTO unknown_fac_id
@@ -67,7 +67,7 @@ BEGIN
 
 	INSERT INTO temp_json_data (id, asset_id, sys_id, fac_code)
 	SELECT 
-	    (p_jsonb ->> ''id'')::INT AS id,
+	    (p_jsonb ->> ''id'')::bigint AS id,
 	    p_jsonb ->> ''asset_id'' AS asset_id,
 	    p_jsonb ->> ''sys_id'' AS sys_id,
 	    p_jsonb ->> ''fac_code'' AS fac_code

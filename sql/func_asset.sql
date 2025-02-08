@@ -2,7 +2,7 @@ CALL drop_functions_by_name('get_assets');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_assets()
-RETURNS TABLE(id BIGINT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS '
+RETURNS TABLE(id BIGINT, asset_id character varying, sys_id character varying, fac_code character varying) AS '
 BEGIN
     RETURN QUERY
     SELECT asset.id, asset.asset_id, asset.sys_id, facility.fac_code FROM daas.asset asset
@@ -14,7 +14,7 @@ CALL drop_functions_by_name('get_assets_by_id');
 /
 -- Stored procedure to get an asset by ID
 CREATE OR REPLACE FUNCTION daas.get_assets_by_id(p_jsonb jsonb)
-RETURNS TABLE(id integer, asset_id character varying, sys_id character varying, fac_code character varying)
+RETURNS TABLE(id bigint, asset_id character varying, sys_id character varying, fac_code character varying)
 AS '
 DECLARE
 BEGIN
@@ -47,12 +47,13 @@ END;
 CALL drop_functions_by_name('asset_upsert_from_json');
 /
 CREATE OR REPLACE FUNCTION asset_upsert_from_json(
-    p_jsonb_in jsonb
+    p_jsonb_in jsonb, p_channel_name TEXT
 ) 
-RETURNS TABLE(id BIGINT, asset_id VARCHAR(250), sys_id VARCHAR(250), fac_code VARCHAR(250)) AS ' 
+RETURNS TABLE(id BIGINT, asset_id character varying, sys_id character varying, fac_code character varying) AS ' 
 DECLARE
 	unknown_fac_id bigint;
 BEGIN
+	DROP TABLE IF EXISTS temp_json_data;
 	CREATE TEMP TABLE temp_json_data (
 	    id BIGINT,
 	    asset_id TEXT,
@@ -93,6 +94,15 @@ BEGIN
 	    INSERT (asset_id, sys_id, fac_id, update_ts)
 	    VALUES (source.asset_id, source.sys_id, source.fac_id, now());
 
+    -- Raise event for consumers
+    FOR asset_id IN
+        SELECT a.asset_id 
+		FROM daas.asset a
+		JOIN temp_json_data t ON a.id = t.id
+    LOOP
+        PERFORM pg_notify(p_channel_name, asset_id);
+    END LOOP;
+	
     -- Return the updated records
     RETURN QUERY 
     SELECT a.id, a.asset_id, a.sys_id, f.fac_code

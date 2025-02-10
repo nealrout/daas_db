@@ -22,3 +22,4 @@ insert into daas.facility (fac_code, fac_name, create_ts) values ('US_TEST_20', 
 
 SELECT setval('daas.facility_id_seq', 99, false);
 insert into daas.facility (fac_code, fac_name, create_ts) values ('UNKNOWN', 'UNKNOWN', now());
+insert into daas.facility (fac_code, fac_name, create_ts) values ('ALL', 'ALL', now());

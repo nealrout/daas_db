@@ -10,8 +10,16 @@
         <sqlFile path="sql/fk_drop.sql" endDelimiter="/"/>
     </changeSet>
 
+    <changeSet id="23" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table_asset_status.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="24" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table_service_status.sql" endDelimiter="/"/>
+    </changeSet>
+
     <changeSet id="2" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_asset.sql" endDelimiter="/"/>
+        <sqlFile path="sql/table_account.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="3" author="neal" runAlways="true" context="init">
@@ -27,47 +35,75 @@
     </changeSet>
 
     <changeSet id="6" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_last_index.sql" endDelimiter="/"/>
+        <sqlFile path="sql/table_asset.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="7" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_index_log.sql" endDelimiter="/"/>
+        <sqlFile path="sql/table_service.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="8" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_facility.sql" endDelimiter="/"/>
+        <sqlFile path="sql/table_last_index.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="9" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_facility_facility.sql" endDelimiter="/"/>
+        <sqlFile path="sql/table_index_log.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="10" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_asset.sql" endDelimiter="/"/>
+        <sqlFile path="sql/row_asset_status.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="11" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_user_facility.sql" endDelimiter="/"/>
+        <sqlFile path="sql/row_service_status.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="12" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/fk_add.sql" endDelimiter="/"/>
+        <sqlFile path="sql/row_account.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="13" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/proc_util.sql" endDelimiter="/"/>
+        <sqlFile path="sql/row_facility.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="14" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_util.sql" endDelimiter="/"/>
+        <sqlFile path="sql/row_facility_facility.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="15" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_asset.sql" endDelimiter="/"/>
+        <sqlFile path="sql/row_asset.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="16" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row_service.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="17" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row_user_facility.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="18" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/fk_add.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="19" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/proc_util.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="20" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/func_util.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="21" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/func_asset.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="22" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/func_user_facility.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="25" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/func_service.sql" endDelimiter="/"/>
     </changeSet>
 
 </databaseChangeLog>

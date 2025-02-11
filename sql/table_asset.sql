@@ -13,3 +13,19 @@ create table if not exists asset (
 ALTER TABLE asset
 ADD CONSTRAINT unique_asset_nbr UNIQUE (asset_nbr);
 /
+DROP INDEX IF EXISTS idx_asset_asset_nbr;
+/
+CREATE INDEX idx_asset_asset_nbr ON asset(asset_nbr, status_code);
+/
+DROP INDEX IF EXISTS idx_asset_sys_id;
+/
+CREATE INDEX idx_asset_sys_id ON asset(sys_id, status_code);
+/
+DROP INDEX IF EXISTS idx_asset_update_ts;
+/
+CREATE INDEX idx_asset_update_ts ON asset(update_ts);
+/
+DROP INDEX IF EXISTS idx_asset_create_ts;
+/
+CREATE INDEX idx_asset_create_ts ON asset(create_ts);
+/

@@ -11,3 +11,15 @@ create table if not exists facility (
     update_ts timestamptz default now()
 );
 /
+DROP INDEX IF EXISTS idx_facility_fac_code;
+/
+CREATE INDEX idx_facility_fac_code ON facility(fac_code) INCLUDE(fac_name);
+/
+DROP INDEX IF EXISTS idx_facility_update_ts;
+/
+CREATE INDEX idx_facility_update_ts ON facility(update_ts);
+/
+DROP INDEX IF EXISTS idx_facility_create_ts;
+/
+CREATE INDEX idx_facility_create_ts ON facility(create_ts);
+/

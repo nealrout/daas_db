@@ -8,3 +8,15 @@ create table if not exists account (
     update_ts timestamptz default now()
 );
 /
+DROP INDEX IF EXISTS idx_account_fac_code;
+/
+CREATE INDEX idx_account_fac_code ON account(acct_code) INCLUDE(acct_name);
+/
+DROP INDEX IF EXISTS idx_account_update_ts;
+/
+CREATE INDEX idx_account_update_ts ON account(update_ts);
+/
+DROP INDEX IF EXISTS idx_account_create_ts;
+/
+CREATE INDEX idx_account_create_ts ON account(create_ts);
+/

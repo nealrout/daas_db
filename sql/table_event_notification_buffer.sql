@@ -7,3 +7,11 @@ CREATE TABLE if not exists event_notification_buffer (
     create_ts TIMESTAMPTZ DEFAULT NOW()
 );
 /
+DROP INDEX IF EXISTS idx_event_notification_buffer_payload;
+/
+CREATE INDEX idx_event_notification_buffer_payload ON event_notification_buffer(payload);
+/
+DROP INDEX IF EXISTS idx_event_notification_buffer_create_ts;
+/
+CREATE INDEX idx_event_notification_buffer_create_ts ON event_notification_buffer(create_ts);
+/

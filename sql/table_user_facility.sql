@@ -11,3 +11,15 @@ create table if not exists user_facility (
 ALTER TABLE user_facility 
 ADD CONSTRAINT unique_user_fac_id UNIQUE (user_id, fac_id);
 /
+DROP INDEX IF EXISTS idx_user_facility_user_id;
+/
+CREATE INDEX idx_user_facility_user_id ON user_facility(user_id);
+/
+DROP INDEX IF EXISTS idx_user_facility_update_ts;
+/
+CREATE INDEX idx_user_facility_update_ts ON user_facility(update_ts);
+/
+DROP INDEX IF EXISTS idx_user_facility_update_ts;
+/
+CREATE INDEX idx_user_facility_update_ts ON user_facility(create_ts);
+/

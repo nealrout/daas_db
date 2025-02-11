@@ -9,3 +9,11 @@ create table if not exists index_log (
     update_ts timestamptz default now()
 );
 /
+DROP INDEX IF EXISTS idx_index_log_update_ts;
+/
+CREATE INDEX idx_index_log_update_ts ON index_log(update_ts);
+/
+DROP INDEX IF EXISTS idx_index_log_create_ts;
+/
+CREATE INDEX idx_index_log_create_ts ON index_log(create_ts);
+/

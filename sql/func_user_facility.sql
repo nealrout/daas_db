@@ -5,9 +5,9 @@ RETURNS TABLE(fac_code character varying) AS '
 BEGIN
     RETURN QUERY 
     SELECT f.fac_code
-    FROM daas.auth_user au 
-    JOIN daas.user_facility uf ON au.id = uf.user_id
-    JOIN daas.facility f ON uf.fac_id = f.id
+    FROM auth_user au 
+    JOIN user_facility uf ON au.id = uf.user_id
+    JOIN facility f ON uf.fac_id = f.id
     WHERE au.id = p_user_id;
 END;
 ' LANGUAGE plpgsql;

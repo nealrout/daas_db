@@ -4,11 +4,11 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_account_id''
-        AND conrelid = ''daas.facility''::regclass
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''facility'')
     ) THEN
-        ALTER TABLE daas.facility
+        ALTER TABLE facility
         ADD CONSTRAINT fk_account_id
-        FOREIGN KEY (acct_id) REFERENCES daas.account(id);
+        FOREIGN KEY (acct_id) REFERENCES account(id);
         RAISE NOTICE ''Foreign key constraint fk_account_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_account_id already exists.'';
@@ -21,11 +21,11 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_facility_id''
-        AND conrelid = ''daas.asset''::regclass
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''asset'')
     ) THEN
-        ALTER TABLE daas.asset
+        ALTER TABLE asset
         ADD CONSTRAINT fk_facility_id
-        FOREIGN KEY (fac_id) REFERENCES daas.facility(id);
+        FOREIGN KEY (fac_id) REFERENCES facility(id);
         RAISE NOTICE ''Foreign key constraint fk_facility_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_facility_id already exists.'';
@@ -38,11 +38,11 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_facility_facility_id''
-        AND conrelid = ''daas.asset''::regclass
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''asset'')
     ) THEN
-        ALTER TABLE daas.asset
+        ALTER TABLE asset
         ADD CONSTRAINT fk_facility_facility_id
-        FOREIGN KEY (fac_id) REFERENCES daas.facility_facility(id);
+        FOREIGN KEY (fac_id) REFERENCES facility_facility(id);
         RAISE NOTICE ''Foreign key constraint fk_facility_facility_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_facility_facility_id already exists.'';
@@ -55,11 +55,11 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_facility_id''
-        AND conrelid = ''daas.user_facility''::regclass
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''user_facility'')
     ) THEN
-        ALTER TABLE daas.user_facility
+        ALTER TABLE user_facility
         ADD CONSTRAINT fk_facility_id
-        FOREIGN KEY (fac_id) REFERENCES daas.facility(id);
+        FOREIGN KEY (fac_id) REFERENCES facility(id);
         RAISE NOTICE ''Foreign key constraint fk_facility_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_facility_id already exists.'';
@@ -72,11 +72,11 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_user_id''
-        AND conrelid = ''daas.user_facility''::regclass
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''user_facility'')
     ) THEN
-        ALTER TABLE daas.user_facility
+        ALTER TABLE user_facility
         ADD CONSTRAINT fk_user_id
-        FOREIGN KEY (user_id) REFERENCES daas.auth_user(id);
+        FOREIGN KEY (user_id) REFERENCES auth_user(id);
         RAISE NOTICE ''Foreign key constraint fk_user_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_user_id already exists.'';
@@ -89,11 +89,11 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_asset_id''
-        AND conrelid = ''daas.service''::regclass
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''service'')
     ) THEN
-        ALTER TABLE daas.service
+        ALTER TABLE service
         ADD CONSTRAINT fk_asset_id
-        FOREIGN KEY (asset_id) REFERENCES daas.asset(id);
+        FOREIGN KEY (asset_id) REFERENCES asset(id);
         RAISE NOTICE ''Foreign key constraint fk_asset_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_asset_id already exists.'';
@@ -106,11 +106,11 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_service_status_status_code''
-        AND conrelid = ''daas.service''::regclass
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''service'')
     ) THEN
-        ALTER TABLE daas.service
+        ALTER TABLE service
         ADD CONSTRAINT fk_service_status_status_code
-        FOREIGN KEY (status_code) REFERENCES daas.service_status(status_code);
+        FOREIGN KEY (status_code) REFERENCES service_status(status_code);
         RAISE NOTICE ''Foreign key constraint fk_service_status_status_code has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_service_status_status_code already exists.'';
@@ -123,11 +123,11 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_asset_status_status_code''
-        AND conrelid = ''daas.asset''::regclass
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''asset'')
     ) THEN
-        ALTER TABLE daas.asset
+        ALTER TABLE asset
         ADD CONSTRAINT fk_asset_status_status_code
-        FOREIGN KEY (status_code) REFERENCES daas.asset_status(status_code);
+        FOREIGN KEY (status_code) REFERENCES asset_status(status_code);
         RAISE NOTICE ''Foreign key constraint fk_asset_status_status_code has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_asset_status_status_code already exists.'';

@@ -25,3 +25,24 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 /
+CALL drop_functions_by_name('iterate_json_keys');
+/
+CREATE OR REPLACE FUNCTION iterate_json_keys(json_input jsonb)
+RETURNS TABLE (json_output jsonb) AS
+'
+DECLARE
+    key_text TEXT;
+    value_json jsonb;
+BEGIN
+    -- Iterate over each key in the JSON object
+    FOR key_text, value_json IN 
+        SELECT key, json_input->key 
+        FROM jsonb_each(json_input)  -- Extracts each key-value pair
+    LOOP
+        -- Return each key and its corresponding array as a separate JSON object
+        json_output := jsonb_build_object(key_text, value_json);
+        RETURN NEXT;
+    END LOOP;
+END;
+' LANGUAGE plpgsql;
+/

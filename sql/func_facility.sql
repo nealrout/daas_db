@@ -1,25 +1,25 @@
-CALL drop_functions_by_name('get_asset');
+CALL drop_functions_by_name('get_facility');
 /
 -- Stored procedure to get all items
-CREATE OR REPLACE FUNCTION get_asset(p_user_id bigint)
-RETURNS TABLE(id BIGINT, fac_code character varying, asset_nbr character varying, sys_id character varying, create_ts timestamptz, update_ts timestamptz) AS '
+CREATE OR REPLACE FUNCTION get_facility(p_user_id bigint)
+RETURNS TABLE(acct_nbr character varying, acct_code character varying, 
+	fac_nbr character varying, fac_code character VARYING, fac_name character varying, create_ts timestamptz, update_ts timestamptz) AS '
 BEGIN
     RETURN QUERY
     SELECT 
-		asset.id, facility.fac_code , asset.asset_nbr, asset.sys_id, asset.create_ts, asset.update_ts
-	FROM 
-		asset asset
-    	JOIN facility facility on asset.fac_id = facility.id
-		JOIN user_facility uf on facility.id = uf.fac_id
+		ac.acct_nbr, ac.acct_code, f.fac_nbr, f.fac_code, f.fac_name, f.create_ts, f.update_ts
+	FROM facility f
+	JOIN user_facility uf on f.id = uf.fac_id
+	JOIN account ac ON f.acct_id = ac.Id
 	WHERE 
 		(uf.user_id = p_user_id OR p_user_id is null);
 END;
 ' LANGUAGE plpgsql;
 /
-CALL drop_functions_by_name('get_asset_by_id');
+CALL drop_functions_by_name('get_facility_by_id');
 /
 -- Stored procedure to get an asset by ID
-CREATE OR REPLACE FUNCTION get_asset_by_id(p_jsonb jsonb, p_user_id bigint)
+CREATE OR REPLACE FUNCTION get_facility_by_id(p_jsonb jsonb, p_user_id bigint)
 RETURNS TABLE(id bigint, fac_code character varying, asset_nbr character varying, sys_id character varying, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE

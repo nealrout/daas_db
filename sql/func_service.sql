@@ -2,8 +2,8 @@ CALL drop_functions_by_name('get_service');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_service(p_user_id bigint)
-RETURNS TABLE(id BIGINT, asset_nbr character varying, sys_id character varying, fac_code character varying, 
-	service_nbr character varying, service_code character varying, service_name character varying, status_code character varying, create_ts timestamptz, update_ts timestamptz) AS '
+RETURNS TABLE(id BIGINT, asset_nbr TEXT, sys_id TEXT, fac_code TEXT, 
+	service_nbr TEXT, service_code TEXT, service_name TEXT, status_code TEXT, create_ts timestamptz, update_ts timestamptz) AS '
 BEGIN
     RETURN QUERY
     SELECT 
@@ -24,8 +24,8 @@ CALL drop_functions_by_name('get_service_by_id');
 /
 -- Stored procedure to get an asset by ID
 CREATE OR REPLACE FUNCTION get_service_by_id(p_jsonb jsonb, p_user_id bigint)
-RETURNS TABLE(id bigint, fac_code character varying, asset_nbr character varying, service_nbr character varying, service_code character varying,
-service_name character varying, status_code character varying, create_ts timestamptz, update_ts timestamptz)
+RETURNS TABLE(id bigint, fac_code TEXT, asset_nbr TEXT, service_nbr TEXT, service_code TEXT,
+service_name TEXT, status_code TEXT, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 BEGIN

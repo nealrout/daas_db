@@ -2,7 +2,7 @@ CALL drop_functions_by_name('get_event_notification_buffer');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_event_notification_buffer(p_channel_name TEXT)
-RETURNS TABLE(id BIGINT, channel character varying, payload character varying, create_ts timestamptz) AS '
+RETURNS TABLE(id BIGINT, channel TEXT, payload TEXT, create_ts timestamptz) AS '
 BEGIN
     RETURN QUERY
     SELECT 

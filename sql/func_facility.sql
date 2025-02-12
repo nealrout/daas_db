@@ -2,8 +2,8 @@ CALL drop_functions_by_name('get_facility');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_facility(p_user_id bigint)
-RETURNS TABLE(acct_nbr character varying, acct_code character varying, 
-	fac_nbr character varying, fac_code character VARYING, fac_name character varying, create_ts timestamptz, update_ts timestamptz) AS '
+RETURNS TABLE(acct_nbr TEXT, acct_code TEXT, 
+	fac_nbr TEXT, fac_code TEXT, fac_name TEXT, create_ts timestamptz, update_ts timestamptz) AS '
 BEGIN
     RETURN QUERY
     SELECT 
@@ -19,48 +19,86 @@ END;
 CALL drop_functions_by_name('get_facility_by_id');
 /
 -- Stored procedure to get an asset by ID
+
 CREATE OR REPLACE FUNCTION get_facility_by_id(p_jsonb jsonb, p_user_id bigint)
-RETURNS TABLE(id bigint, fac_code character varying, asset_nbr character varying, sys_id character varying, create_ts timestamptz, update_ts timestamptz)
+RETURNS TABLE(acct_nbr text, acct_code text, fac_nbr text, fac_code text, fac_name text, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
+--	p_jsonb jsonb := ''{
+--		"acct_nbr": ["ACCT_NBR_10"],
+--        "fac_code": ["US_TEST_10"],
+--        "fac_name": ["TEST FACILITY 17", "TEST FACILITY 18"],
+--        "fac_nbr": ["FAC_NBR_03", "FAC_NBR_02"]
+--    }'';
+--
+--	p_user_id bigint := 2;
 BEGIN
-  	RETURN QUERY
-	WITH fac_cte_condition as (
-		select f.id, f.fac_code
-		from facility f
-		JOIN get_jsonb_values_by_key (p_jsonb, ''fac_code'') k on f.fac_code = k.value
+	
+	create temp table parsed_keys as
+	select * from iterate_json_keys(p_jsonb);
+
+	create temp table parsed_values as
+	select 
+		get_jsonb_values_by_key (json_output, ''acct_nbr'') as acct_nbr, 
+		get_jsonb_values_by_key (json_output, ''acct_code'') as acct_code, 
+		get_jsonb_values_by_key (json_output, ''fac_nbr'') as fac_nbr, 
+		get_jsonb_values_by_key (json_output, ''fac_code'') as fac_code,
+		get_jsonb_values_by_key (json_output, ''fac_name'') as fac_name
+	from parsed_keys p;
+
+--	create table res as select acct.acct_nbr, acct.acct_code, fac.fac_nbr, fac.fac_code, fac.fac_name, fac.create_ts, fac.update_ts 
+--	from account acct join facility fac on acct.id = fac.acct_id limit 0;
+
+	RETURN QUERY
+	with acct_cte_condition as(
+		select a.*
+		from account a
+		join parsed_values v on a.acct_nbr = v.acct_nbr
+		union
+		select a.*
+		from account a
+		join parsed_values v on a.acct_nbr = v.acct_code
+	),
+	acct_cte_no_condition as(
+		select a.*
+		from account a
+	),
+	fac_cte_condition as (
+		SELECT f.*
+		FROM facility f
+		JOIN parsed_values v ON f.fac_nbr = v.fac_nbr
+		UNION
+		SELECT f.*
+		FROM facility f
+		JOIN parsed_values v ON f.fac_code = v.fac_code
+		UNION
+		SELECT f.*
+		FROM facility f
+		JOIN parsed_values v ON f.fac_name = v.fac_name
 	),
 	fac_cte_no_condition as (
-		select f.id, f.fac_code
+		select f.*
 		from facility f
-	),
-	asset_cte_condition as (
-		select a.id, a.fac_id, a.asset_nbr, a.sys_id, a.create_ts, a.update_ts
-		from asset a
-		JOIN get_jsonb_values_by_key (p_jsonb, ''asset_nbr'') k on a.asset_nbr = k.value
-	),
-	asset_cte_no_condition as (
-		select a.id, a.fac_id, a.asset_nbr, a.sys_id, a.create_ts, a.update_ts
-		from asset a
 	)
 
-	select a.id, f.fac_code, a.asset_nbr, a.sys_id, a.create_ts, a.update_ts
+--	insert into res
+	
+	select acct.acct_nbr, acct.acct_code, fac.fac_nbr, fac.fac_code, fac.fac_name, fac.create_ts, fac.update_ts
 	from
 	(
-		select fc.id, fc.fac_code from fac_cte_condition fc
-		union all
-		select fnc.id, fnc.fac_code from fac_cte_no_condition fnc
-		where (select count(*) from fac_cte_condition) = 0
-	) f
+		select * from acct_cte_condition
+		UNION
+		select * from acct_cte_no_condition where (select count(*) from acct_cte_condition) = 0
+	) as acct
 	join
 	(
-		select ac.id, ac.fac_id, ac.asset_nbr, ac.sys_id, ac.create_ts, ac.update_ts from asset_cte_condition ac
-		union all
-		select anc.id, anc.fac_id, anc.asset_nbr, anc.sys_id, anc.create_ts, anc.update_ts from asset_cte_no_condition anc
-		where (select count(*) from asset_cte_condition) = 0
-	) a on f.id = a.fac_id
-	join
-	user_facility uf on f.id = uf.fac_id
+		select * from fac_cte_condition
+		UNION
+		select * from fac_cte_no_condition where (select count(*) from fac_cte_condition) = 0
+	) as fac
+	on acct.id = fac.acct_id
+	join 
+		user_facility uf on fac.id = uf.fac_id
 	WHERE
 		(uf.user_id = p_user_id OR p_user_id is null);
 
@@ -72,7 +110,7 @@ CALL drop_functions_by_name('upsert_asset_from_json');
 CREATE OR REPLACE FUNCTION upsert_asset_from_json(
     p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
 ) 
-RETURNS TABLE(id BIGINT, asset_nbr character varying, sys_id character varying, fac_nbr character varying, fac_code character varying) AS ' 
+RETURNS TABLE(id BIGINT, asset_nbr TEXT, sys_id TEXT, fac_nbr TEXT, fac_code TEXT) AS ' 
 DECLARE
 	unknown_fac_id bigint;
 BEGIN

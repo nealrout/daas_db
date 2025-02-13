@@ -98,6 +98,14 @@
         <sqlFile path="sql/func_util.sql" endDelimiter="/"/>
     </changeSet>
 
+    <changeSet id="28" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/func_account.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="29" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/func_facility.sql" endDelimiter="/"/>
+    </changeSet>
+
     <changeSet id="24" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/func_asset.sql" endDelimiter="/"/>
     </changeSet>

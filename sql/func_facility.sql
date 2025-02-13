@@ -3,7 +3,8 @@ CALL drop_functions_by_name('get_facility');
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_facility(p_user_id bigint)
 RETURNS TABLE(acct_nbr TEXT, acct_code TEXT, 
-	fac_nbr TEXT, fac_code TEXT, fac_name TEXT, create_ts timestamptz, update_ts timestamptz) AS '
+	fac_nbr TEXT, fac_code TEXT, fac_name TEXT, create_ts timestamptz, update_ts timestamptz) 
+AS '
 BEGIN
     RETURN QUERY
     SELECT 
@@ -34,6 +35,9 @@ DECLARE
 --	p_user_id bigint := 2;
 BEGIN
 	
+	drop table if exists parsed_keys;
+	drop table if exists parsed_values;
+
 	create temp table parsed_keys as
 	select * from iterate_json_keys(p_jsonb);
 

@@ -10,6 +10,10 @@
         <sqlFile path="sql/fk_drop.sql" endDelimiter="/"/>
     </changeSet>
 
+    <changeSet id="29" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table_log.sql" endDelimiter="/"/>
+    </changeSet>
+
     <changeSet id="2" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/table_asset_status.sql" endDelimiter="/"/>
     </changeSet>
@@ -88,6 +92,10 @@
 
     <changeSet id="22" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/func_util.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="30" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/proc_log.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="23" author="neal" runAlways="true" context="init">

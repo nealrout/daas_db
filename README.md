@@ -49,7 +49,8 @@ If the DaaS database does not exist yet, you must create it with a password that
 
 #
     Initialization
-        liquibase update --contexts=init --username=UPDATEME --password=UPDATEME
+        liquibase update --url=jdbc:postgresql://localhost:5432/us_dev_daas --contexts=init --username=UPDATEME --password=UPDATEME
+        liquibase update --url=jdbc:postgresql://localhost:5432/us_int_daas --contexts=init --username=UPDATEME --password=UPDATEME
 
     Migration
         liquibase update --contexts=update --username=UPDATEME --password=UPDATEME

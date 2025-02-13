@@ -21,10 +21,10 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 /
-CALL drop_functions_by_name('get_service_by_id');
+CALL drop_functions_by_name('get_service_by_json');
 /
 -- Stored procedure to get an asset by ID
-CREATE OR REPLACE FUNCTION get_service_by_id(p_jsonb jsonb, p_user_id bigint)
+CREATE OR REPLACE FUNCTION get_service_by_json(p_jsonb jsonb, p_user_id bigint)
 RETURNS TABLE(acct_nbr TEXT, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, service_nbr TEXT, service_code TEXT, svc_name TEXT, status_code TEXT, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE

@@ -17,11 +17,11 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 /
-CALL drop_functions_by_name('get_facility_by_id');
+CALL drop_functions_by_name('get_facility_by_json');
 /
 -- Stored procedure to get an asset by ID
 
-CREATE OR REPLACE FUNCTION get_facility_by_id(p_jsonb jsonb, p_user_id bigint)
+CREATE OR REPLACE FUNCTION get_facility_by_json(p_jsonb jsonb, p_user_id bigint)
 RETURNS TABLE(acct_nbr text, acct_code text, fac_nbr text, fac_code text, fac_name text, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE

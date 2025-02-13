@@ -1,5 +1,8 @@
 # daas_db
 
+## Project
+
+Refrence of DaaS Project - https://github.com/nealrout/daas_docs
 ## Description
 
 This project contains the liquibase scripts to build and underlying PostgreSQL daas database.  This database stores facility, asset, etc. information for DaaS that will be fetched through Django apis.  We are adding functions and procedures so we can control the CRUD operations at the DBMS level.
@@ -18,7 +21,7 @@ PostgreSQL - https://www.postgresql.org/download/
 
 Liquibase CLI (open source)- https://www.liquibase.com/download
 ## Miscellaneous
-For postgresql anonomous blocks to work we have to make the following substitutions in the .sql files
+For postgresql anonymous blocks to work we have to make the following substitutions in the .sql files
 
 - From
   - '

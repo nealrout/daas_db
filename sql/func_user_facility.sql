@@ -1,7 +1,7 @@
 CALL drop_functions_by_name('get_user_facility');
 /
 CREATE OR REPLACE FUNCTION get_user_facility(p_user_id BIGINT)
-RETURNS TABLE(fac_code character varying) AS '
+RETURNS TABLE(fac_code TEXT) AS '
 BEGIN
     RETURN QUERY 
     SELECT f.fac_code

@@ -1,27 +1,28 @@
-CALL drop_functions_by_name('get_asset');
+CALL drop_functions_by_name('get_facility');
 /
 -- Stored procedure to get all items
-CREATE OR REPLACE FUNCTION get_asset(p_user_id bigint)
-RETURNS TABLE(id BIGINT, fac_code TEXT, asset_nbr TEXT, sys_id TEXT, create_ts timestamptz, update_ts timestamptz) 
+CREATE OR REPLACE FUNCTION get_facility(p_user_id bigint)
+RETURNS TABLE(acct_nbr TEXT, acct_code TEXT, 
+	fac_nbr TEXT, fac_code TEXT, fac_name TEXT, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
     SELECT 
-		asset.id, facility.fac_code , asset.asset_nbr, asset.sys_id, asset.create_ts, asset.update_ts
-	FROM 
-		asset asset
-    	JOIN facility facility on asset.fac_id = facility.id
-		JOIN user_facility uf on facility.id = uf.fac_id
+		ac.acct_nbr, ac.acct_code, f.fac_nbr, f.fac_code, f.fac_name, f.create_ts, f.update_ts
+	FROM facility f
+	JOIN user_facility uf on f.id = uf.fac_id
+	JOIN account ac ON f.acct_id = ac.Id
 	WHERE 
 		(uf.user_id = p_user_id OR p_user_id is null);
 END;
 ' LANGUAGE plpgsql;
 /
-CALL drop_functions_by_name('get_asset_by_id');
+CALL drop_functions_by_name('get_facility_by_id');
 /
 -- Stored procedure to get an asset by ID
-CREATE OR REPLACE FUNCTION get_asset_by_id(p_jsonb jsonb, p_user_id bigint)
-RETURNS TABLE(acct_nbr text, fac_nbr text, asset_nbr text, sys_id text, status_code text, create_ts timestamptz, update_ts timestamptz)
+
+CREATE OR REPLACE FUNCTION get_facility_by_id(p_jsonb jsonb, p_user_id bigint)
+RETURNS TABLE(acct_nbr text, acct_code text, fac_nbr text, fac_code text, fac_name text, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
@@ -43,55 +44,50 @@ BEGIN
 	create temp table parsed_values as
 	select 
 		get_jsonb_values_by_key (json_output, ''acct_nbr'') as acct_nbr, 
+		get_jsonb_values_by_key (json_output, ''acct_code'') as acct_code, 
 		get_jsonb_values_by_key (json_output, ''fac_nbr'') as fac_nbr, 
-		get_jsonb_values_by_key (json_output, ''asset_nbr'') as asset_nbr,
-		get_jsonb_values_by_key (json_output, ''sys_id'') as sys_id,
-		get_jsonb_values_by_key (json_output, ''status_code'') as status_code
+		get_jsonb_values_by_key (json_output, ''fac_code'') as fac_code,
+		get_jsonb_values_by_key (json_output, ''fac_name'') as fac_name
 	from parsed_keys p;
 
---	create table res as select acct.acct_nbr, fac.fac_nbr, ass.asset_nbr, ass.sys_id, ass.status_code, ass.create_ts, ass.update_ts
---	from account acct join facility fac on acct.id = fac.acct_id join asset a on fac.id = a.fac_id limit 0;
+--	create table res as select acct.acct_nbr, acct.acct_code, fac.fac_nbr, fac.fac_code, fac.fac_name, fac.create_ts, fac.update_ts 
+--	from account acct join facility fac on acct.id = fac.acct_id limit 0;
 
 	RETURN QUERY
-	with acct_cte_condition as (
-		select acc.*
-		from account acc
-		join parsed_values v on acc.acct_nbr = v.acct_nbr
+	with acct_cte_condition as(
+		select a.*
+		from account a
+		join parsed_values v on a.acct_nbr = v.acct_nbr
+		union
+		select a.*
+		from account a
+		join parsed_values v on a.acct_nbr = v.acct_code
 	),
-	acct_cte_no_condition as (
-		select acc.*
-		from account acc
+	acct_cte_no_condition as(
+		select a.*
+		from account a
 	),
 	fac_cte_condition as (
 		SELECT f.*
 		FROM facility f
 		JOIN parsed_values v ON f.fac_nbr = v.fac_nbr
+		UNION
+		SELECT f.*
+		FROM facility f
+		JOIN parsed_values v ON f.fac_code = v.fac_code
+		UNION
+		SELECT f.*
+		FROM facility f
+		JOIN parsed_values v ON f.fac_name = v.fac_name
 	),
 	fac_cte_no_condition as (
 		select f.*
 		from facility f
-	),
-	asset_cte_condition as (
-		select a.*
-		from asset a
-		join parsed_values v on a.asset_nbr = v.asset_nbr
-		union
-		select a.*
-		from asset a
-		join parsed_values v on a.sys_id = v.sys_id
-		union
-		select a.*
-		from asset a
-		join parsed_values v on a.status_code = v.status_code
-	),
-	asset_cte_no_condition as (
-		select a.*
-		from asset a
 	)
 
 --	insert into res
 	
-	select acct.acct_nbr, fac.fac_nbr, ass.asset_nbr, ass.sys_id, ass.status_code, ass.create_ts, ass.update_ts
+	select acct.acct_nbr, acct.acct_code, fac.fac_nbr, fac.fac_code, fac.fac_name, fac.create_ts, fac.update_ts
 	from
 	(
 		select * from acct_cte_condition
@@ -104,13 +100,7 @@ BEGIN
 		UNION
 		select * from fac_cte_no_condition where (select count(*) from fac_cte_condition) = 0
 	) as fac
-		on acct.id = fac.acct_id
-	join
-	(
-		select * from asset_cte_condition
-		union
-		select * from asset_cte_no_condition where (select count(*) from asset_cte_condition) = 0
-	) as ass on fac.id = ass.fac_id
+	on acct.id = fac.acct_id
 	join 
 		user_facility uf on fac.id = uf.fac_id
 	WHERE

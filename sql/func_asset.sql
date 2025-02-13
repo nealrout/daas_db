@@ -2,12 +2,12 @@ CALL drop_functions_by_name('get_asset');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_asset(p_user_id bigint)
-RETURNS TABLE(id BIGINT, fac_code TEXT, asset_nbr TEXT, sys_id TEXT, create_ts timestamptz, update_ts timestamptz) 
+RETURNS TABLE(id BIGINT, fac_nbr TEXT, fac_code TEXT, asset_nbr TEXT, sys_id TEXT, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
     SELECT 
-		asset.id, facility.fac_code , asset.asset_nbr, asset.sys_id, asset.create_ts, asset.update_ts
+		asset.id, facility.fac_nbr, facility.fac_code , asset.asset_nbr, asset.sys_id, asset.create_ts, asset.update_ts
 	FROM 
 		asset asset
     	JOIN facility facility on asset.fac_id = facility.id

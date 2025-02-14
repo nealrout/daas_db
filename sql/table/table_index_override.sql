@@ -5,7 +5,7 @@ create table if not exists index_override (
     domain TEXT not null,
     index_source_ts timestamptz not null,
     index_target_ts timestamptz not null,
-    update_ts timestamptz default now()
+    create_ts timestamptz default now()
 );
 /
 ALTER TABLE index_override
@@ -18,5 +18,5 @@ create table if not exists index_override_history (
     domain TEXT not null,
     index_source_ts timestamptz not null,
     index_target_ts timestamptz not null,
-    update_ts timestamptz default now()
+    create_ts timestamptz default now()
 );

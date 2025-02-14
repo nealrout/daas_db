@@ -110,3 +110,19 @@ BEGIN
     END IF;
 END ';
 /
+DO '
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = ''fk_index_log_status_code''
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''index_log'')
+    ) THEN
+        ALTER TABLE index_log
+        DROP CONSTRAINT fk_index_log_status_code;
+        RAISE NOTICE ''Foreign key constraint fk_index_log_status_code has been dropped.'';
+    ELSE
+        RAISE NOTICE ''Foreign key constraint fk_index_log_status_code does not exists.'';
+    END IF;
+END ';
+/

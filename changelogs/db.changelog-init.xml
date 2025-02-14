@@ -43,7 +43,7 @@
     </changeSet>
 
     <changeSet id="9" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_last_index.sql" endDelimiter="/"/>
+        <sqlFile path="sql/table_index_override.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="10" author="neal" runAlways="true" context="init">
@@ -120,6 +120,10 @@
 
     <changeSet id="28" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/func_event_notification_buffer.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="31" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/func_index_override.sql" endDelimiter="/"/>
     </changeSet>
 
 </databaseChangeLog>

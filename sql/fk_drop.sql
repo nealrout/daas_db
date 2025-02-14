@@ -35,23 +35,6 @@ BEGIN
     IF EXISTS (
         SELECT 1
         FROM pg_constraint
-        WHERE conname = ''fk_facility_facility_id''
-        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''asset'')
-    ) THEN
-        ALTER TABLE asset
-        DROP CONSTRAINT fk_facility_facility_id;
-        RAISE NOTICE ''Foreign key constraint fk_facility_facility_id has been dropped.'';
-    ELSE
-        RAISE NOTICE ''Foreign key constraint fk_facility_facility_id does not exist.'';
-    END IF;
-END ';
-/
-/
-DO '
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM pg_constraint
         WHERE conname = ''fk_facility_id''
         AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''user_facility'')
     ) THEN

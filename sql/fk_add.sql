@@ -119,3 +119,20 @@ BEGIN
     END IF;
 END ';
 /
+DO '
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = ''fk_index_log_status_code''
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''index_log'')
+    ) THEN
+        ALTER TABLE index_log
+        ADD CONSTRAINT fk_index_log_status_code
+        FOREIGN KEY (status_code) REFERENCES index_status(status_code);
+        RAISE NOTICE ''Foreign key constraint fk_index_log_status_code has been added.'';
+    ELSE
+        RAISE NOTICE ''Foreign key constraint fk_index_log_status_code already exists.'';
+    END IF;
+END ';
+/

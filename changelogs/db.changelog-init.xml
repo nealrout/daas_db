@@ -6,124 +6,133 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
     <!-- ChangeSet for Initialization -->
-    <changeSet id="1" author="neal" runAlways="true" context="init">
+    <changeSet id="fk_drop" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/fk_drop.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="29" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_log.sql" endDelimiter="/"/>
+    <changeSet id="table_log" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_log.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="2" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_asset_status.sql" endDelimiter="/"/>
+    <changeSet id="table_asset_status" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_asset_status.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="3" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_service_status.sql" endDelimiter="/"/>
+    <changeSet id="table_service_status" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_service_status.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="4" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_account.sql" endDelimiter="/"/>
+    <changeSet id="table_index_status" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_index_status.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="5" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_facility.sql" endDelimiter="/"/>
+    <changeSet id="table_account" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_account.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="table_facility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_facility.sql" endDelimiter="/"/>
     </changeSet>
     
-    <changeSet id="6" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_user_facility.sql" endDelimiter="/"/>
+    <changeSet id="table_user_facility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_user_facility.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="7" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_asset.sql" endDelimiter="/"/>
+    <changeSet id="table_asset" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_asset.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="8" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_service.sql" endDelimiter="/"/>
+    <changeSet id="table_service" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_service.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="9" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_index_override.sql" endDelimiter="/"/>
+    <changeSet id="table_index_override" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_index_override.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="10" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_index_log.sql" endDelimiter="/"/>
+    <changeSet id="table_index_log" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_index_log.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="11" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table_event_notification_buffer.sql" endDelimiter="/"/>
+    <changeSet id="table_event_notification_buffer" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_event_notification_buffer.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="12" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_asset_status.sql" endDelimiter="/"/>
+    <changeSet id="row_asset_status" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_asset_status.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="13" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_service_status.sql" endDelimiter="/"/>
+    <changeSet id="row_service_status" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_service_status.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="14" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_account.sql" endDelimiter="/"/>
+    <changeSet id="row_index_status" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_index_status.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="15" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_facility.sql" endDelimiter="/"/>
+    <changeSet id="row_account" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_account.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="17" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_asset.sql" endDelimiter="/"/>
+    <changeSet id="row_facility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_facility.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="18" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_service.sql" endDelimiter="/"/>
+    <changeSet id="row_asset" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_asset.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="19" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row_user_facility.sql" endDelimiter="/"/>
+    <changeSet id="row_service" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_service.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="20" author="neal" runAlways="true" context="init">
+    <changeSet id="row_user_facility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_user_facility.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="fk_add" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/fk_add.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="21" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/proc_util.sql" endDelimiter="/"/>
+    <changeSet id="func_util" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_util.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="22" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_util.sql" endDelimiter="/"/>
+    <changeSet id="func_log" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_log.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="30" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/proc_log.sql" endDelimiter="/"/>
+    <changeSet id="func_account" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_account.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="23" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_account.sql" endDelimiter="/"/>
+    <changeSet id="func_facility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_facility.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="24" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_facility.sql" endDelimiter="/"/>
+    <changeSet id="func_asset" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_asset.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="25" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_asset.sql" endDelimiter="/"/>
+    <changeSet id="func_user_facility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_user_facility.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="26" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_user_facility.sql" endDelimiter="/"/>
+    <changeSet id="func_service" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_service.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="27" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_service.sql" endDelimiter="/"/>
+    <changeSet id="func_event_notification_buffer" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_event_notification_buffer.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="28" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_event_notification_buffer.sql" endDelimiter="/"/>
+    <changeSet id="func_index_override" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_index_override.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="31" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/func_index_override.sql" endDelimiter="/"/>
-    </changeSet>
+    <changeSet id="func_index_log" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_index_log.sql" endDelimiter="/"/>
+    </changeSet>    
+
 
 </databaseChangeLog>

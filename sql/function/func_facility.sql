@@ -21,20 +21,31 @@ CALL drop_functions_by_name('get_facility_by_json');
 /
 -- Stored procedure to get an asset by ID
 
-CREATE OR REPLACE FUNCTION get_facility_by_json(p_jsonb jsonb, p_user_id bigint)
-RETURNS TABLE(acct_nbr text, acct_code text, fac_nbr text, fac_code text, fac_name text, create_ts timestamptz, update_ts timestamptz)
+CREATE OR REPLACE FUNCTION get_facility_by_json(p_jsonb jsonb, p_user_id bigint default null)
+RETURNS TABLE(acct_nbr text, acct_code text, fac_nbr text, fac_code text, fac_name CITEXT, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
---		"acct_nbr": ["ACCT_NBR_10"],
---        "fac_code": ["US_TEST_10"],
---        "fac_name": ["TEST FACILITY 17", "TEST FACILITY 18"],
---        "fac_nbr": ["FAC_NBR_03", "FAC_NBR_02"]
---    }'';
+--    "acct_nbr": [
+--        "ACCT_NBR_10"
+--    ],
+--    "fac_code": [
+--        "US_TEST_10"
+--    ],
+--    "fac_name": [
+--        "TEST FACILITY 10",
+--        "TEST FACILITY 18"
+--    ],
+--    "fac_nbr": [
+--        "FAC_NBR_10",
+--        "FAC_NBR_02"
+--    ]
+--}'';
 --
 --	p_user_id bigint := 2;
 BEGIN
-	
+	-- These drop statements are not required when deployed (they auto drop when out of scope).
+	-- These are here to help when needing to test in a local session.
 	drop table if exists parsed_keys;
 	drop table if exists parsed_values;
 
@@ -43,69 +54,57 @@ BEGIN
 
 	create temp table parsed_values as
 	select 
-		get_jsonb_values_by_key (json_output, ''acct_nbr'') as acct_nbr, 
-		get_jsonb_values_by_key (json_output, ''acct_code'') as acct_code, 
-		get_jsonb_values_by_key (json_output, ''fac_nbr'') as fac_nbr, 
-		get_jsonb_values_by_key (json_output, ''fac_code'') as fac_code,
-		get_jsonb_values_by_key (json_output, ''fac_name'') as fac_name
-	from parsed_keys p;
+		''acct_nbr'' as filter, get_jsonb_values_by_key (json_output, ''acct_nbr'') as value
+		from parsed_keys
+		union select 
+		''acct_code'' as filter, get_jsonb_values_by_key (json_output, ''acct_code'') as value
+		from parsed_keys
+		union select 
+		''fac_nbr'' as filter, get_jsonb_values_by_key (json_output, ''fac_nbr'') as value
+		from parsed_keys
+		union select 
+		''fac_code'' as filter, get_jsonb_values_by_key (json_output, ''fac_code'') as value
+		from parsed_keys
+		union select 
+		''fac_name'' as filter, get_jsonb_values_by_key (json_output, ''fac_name'')::CITEXT as value
+		from parsed_keys;
 
 --	create table res as select acct.acct_nbr, acct.acct_code, fac.fac_nbr, fac.fac_code, fac.fac_name, fac.create_ts, fac.update_ts 
 --	from account acct join facility fac on acct.id = fac.acct_id limit 0;
 
 	RETURN QUERY
-	with acct_cte_condition as(
-		select a.*
-		from account a
-		join parsed_values v on a.acct_nbr = v.acct_nbr
-		union
-		select a.*
-		from account a
-		join parsed_values v on a.acct_nbr = v.acct_code
-	),
-	acct_cte_no_condition as(
-		select a.*
-		from account a
-	),
-	fac_cte_condition as (
-		SELECT f.*
-		FROM facility f
-		JOIN parsed_values v ON f.fac_nbr = v.fac_nbr
-		UNION
-		SELECT f.*
-		FROM facility f
-		JOIN parsed_values v ON f.fac_code = v.fac_code
-		UNION
-		SELECT f.*
-		FROM facility f
-		JOIN parsed_values v ON f.fac_name = v.fac_name
-	),
-	fac_cte_no_condition as (
-		select f.*
-		from facility f
-	)
-
---	insert into res
-	
-	select acct.acct_nbr, acct.acct_code, fac.fac_nbr, fac.fac_code, fac.fac_name, fac.create_ts, fac.update_ts
-	from
-	(
-		select * from acct_cte_condition
-		UNION
-		select * from acct_cte_no_condition where (select count(*) from acct_cte_condition) = 0
-	) as acct
-	join
-	(
-		select * from fac_cte_condition
-		UNION
-		select * from fac_cte_no_condition where (select count(*) from fac_cte_condition) = 0
-	) as fac
-	on acct.id = fac.acct_id
-	join 
-		user_facility uf on fac.id = uf.fac_id
-	WHERE
-		(uf.user_id = p_user_id OR p_user_id is null);
-
+	SELECT
+		acc.acct_nbr, acc.acct_code, fac.fac_nbr, fac.fac_code, fac.fac_name, fac.create_ts, fac.update_ts
+	FROM account acc
+	JOIN facility fac ON acc.id = fac.acct_id 
+	JOIN user_facility uf on fac.id = uf.fac_id
+	WHERE 
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''acct_nbr'' AND acc.acct_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''acct_nbr'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''acct_code'' AND acc.acct_code = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''acct_code'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''fac_nbr'' AND fac.fac_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''fac_nbr'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''fac_code'' AND fac.fac_code = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''fac_code'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''fac_name'' AND fac.fac_name = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''fac_name'') = 0
+		)
+		AND (uf.user_id = p_user_id OR p_user_id is null);
+		
 END;
 ' LANGUAGE plpgsql;
 /

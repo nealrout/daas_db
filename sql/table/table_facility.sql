@@ -7,7 +7,7 @@ create table if not exists facility (
     acct_id bigint not null,
     fac_nbr TEXT not null,
     fac_code TEXT null,
-    fac_name TEXT null,
+    fac_name CITEXT null,
     create_ts timestamptz null,
     update_ts timestamptz default now()
 );

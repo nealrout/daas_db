@@ -20,8 +20,8 @@ CALL drop_functions_by_name('get_account_by_json');
 /
 -- Stored procedure to get an asset by ID
 
-CREATE OR REPLACE FUNCTION get_account_by_json(p_jsonb jsonb, p_user_id bigint)
-RETURNS TABLE(acct_nbr text, acct_code text, acct_name text, create_ts timestamptz, update_ts timestamptz)
+CREATE OR REPLACE FUNCTION get_account_by_json(p_jsonb jsonb, p_user_id bigint default NULL)
+RETURNS TABLE(acct_nbr text, acct_code text, acct_name CITEXT, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
@@ -30,7 +30,8 @@ DECLARE
 --
 --	p_user_id bigint := 2;
 BEGIN
-	
+	-- These drop statements are not required when deployed (they auto drop when out of scope).
+	-- These are here to help when needing to test in a local session.
 	drop table if exists parsed_keys;
 	drop table if exists parsed_values;
 
@@ -39,39 +40,30 @@ BEGIN
 
 	create temp table parsed_values as
 	select 
-		get_jsonb_values_by_key (json_output, ''acct_nbr'') as acct_nbr, 
-		get_jsonb_values_by_key (json_output, ''acct_code'') as acct_code, 
-		get_jsonb_values_by_key (json_output, ''acct_name'') as acct_name
-	from parsed_keys p;
+		''acct_nbr'' as filter, get_jsonb_values_by_key (json_output, ''acct_nbr'') as value
+		from parsed_keys
+		union select 
+		''acct_code'' as filter, get_jsonb_values_by_key (json_output, ''acct_code'') as value
+		from parsed_keys
+		union select 
+		''acct_name'' as filter, get_jsonb_values_by_key (json_output, ''acct_name'')::CITEXT as value
+		from parsed_keys;
+
 
 	RETURN QUERY
-	with acct_cte_condition as(
-		select a.*
-		from account a
-		join parsed_values v on a.acct_nbr = v.acct_nbr
-		union
-		select a.*
-		from account a
-		join parsed_values v on a.acct_nbr = v.acct_code
-	),
-	acct_cte_no_condition as(
-		select a.*
-		from account a
-	)
-
 	select distinct 
-		acct.acct_nbr, acct.acct_code, acct.acct_name, acct.create_ts, acct.update_ts
-	from
-	(
-		select * from acct_cte_condition
-		UNION
-		select * from acct_cte_no_condition where (select count(*) from acct_cte_condition) = 0
-	) as acct
-	join facility fac on acct.id = fac.acct_id
+		acc.acct_nbr, acc.acct_code, acc.acct_name, acc.create_ts, acc.update_ts
+	FROM account acc
+	join 
+		facility fac on acc.id = fac.acct_id
 	join 
 		user_facility uf on fac.id = uf.fac_id
-	WHERE
-		(uf.user_id = p_user_id OR p_user_id is null);
+	WHERE 
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.filter = ''acct_nbr'' AND acc.acct_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.filter = ''acct_nbr'') = 0
+		)
+		AND (uf.user_id = p_user_id OR p_user_id is null);
 
 END;
 ' LANGUAGE plpgsql;

@@ -6,7 +6,7 @@ create table if not exists service (
     svc_nbr TEXT not null,
     svc_code TEXT not null,
     svc_name TEXT null,
-    status_code TEXT not null default 'UNKNOWN',
+    status_code CITEXT not null default 'UNKNOWN',
     create_ts timestamptz null,
     update_ts timestamptz default now()
 );

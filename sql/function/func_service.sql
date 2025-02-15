@@ -3,7 +3,7 @@ CALL drop_functions_by_name('get_service');
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_service(p_user_id bigint)
 RETURNS TABLE(id BIGINT, asset_nbr TEXT, sys_id TEXT, fac_code TEXT, 
-	service_nbr TEXT, service_code TEXT, service_name TEXT, status_code TEXT, create_ts timestamptz, update_ts timestamptz) 
+	service_nbr TEXT, service_code TEXT, service_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
@@ -25,19 +25,24 @@ CALL drop_functions_by_name('get_service_by_json');
 /
 -- Stored procedure to get an asset by ID
 CREATE OR REPLACE FUNCTION get_service_by_json(p_jsonb jsonb, p_user_id bigint)
-RETURNS TABLE(acct_nbr TEXT, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, service_nbr TEXT, service_code TEXT, svc_name TEXT, status_code TEXT, create_ts timestamptz, update_ts timestamptz)
+RETURNS TABLE(acct_nbr TEXT, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, service_nbr TEXT, service_code TEXT, svc_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
---		"acct_nbr": ["ACCT_NBR_10"],
---        "fac_code": ["US_TEST_10"],
---        "fac_name": ["TEST FACILITY 17", "TEST FACILITY 18"],
---        "fac_nbr": ["FAC_NBR_03", "FAC_NBR_02"]
---    }'';
+--    "acct_nbr": ["ACCT_NBR_03"]
+--    ,"fac_nbr": ["FAC_NBR_03"]
+--    ,"asset_nbr": ["asset_29", "asset_30"]
+--    ,"sys_id": ["system_09","system_10"]
+--	,"svc_nbr": ["SVC_NBR_287","SVC_NBR_288"]
+--	,"svc_code": ["SVC_007","SVC_008"]
+--	,"svc_name": ["Service Name_007","Service Name_008"]
+--    ,"status_code": ["UNKNOWN"]
+--}'';
 --
 --	p_user_id bigint := 2;
 BEGIN
-	
+	-- These drop statements are not required when deployed (they auto drop when out of scope).
+	-- These are here to help when needing to test in a local session.
 	drop table if exists parsed_keys;
 	drop table if exists parsed_values;
 
@@ -46,107 +51,87 @@ BEGIN
 
 	create temp table parsed_values as
 	select 
-		get_jsonb_values_by_key (json_output, ''acct_nbr'') as acct_nbr, 
-		get_jsonb_values_by_key (json_output, ''fac_nbr'') as fac_nbr, 
-		get_jsonb_values_by_key (json_output, ''asset_nbr'') as asset_nbr,
-		get_jsonb_values_by_key (json_output, ''sys_id'') as sys_id,
-		get_jsonb_values_by_key (json_output, ''svc_nbr'') as svc_nbr,
-		get_jsonb_values_by_key (json_output, ''svc_code'') as svc_code,
-		get_jsonb_values_by_key (json_output, ''svc_name'') as svc_name,
-		get_jsonb_values_by_key (json_output, ''status_code'') as status_code
-	from parsed_keys p;
+		''acct_nbr'' as filter, get_jsonb_values_by_key (json_output, ''acct_nbr'') as value
+		from parsed_keys
+		union select 
+		''fac_nbr'' as filter, get_jsonb_values_by_key (json_output, ''fac_nbr'') as value
+		from parsed_keys
+		union select 
+		''asset_nbr'' as filter, get_jsonb_values_by_key (json_output, ''asset_nbr'') as value
+		from parsed_keys
+		union select 
+		''sys_id'' as filter, get_jsonb_values_by_key (json_output, ''sys_id'') as value
+		from parsed_keys
+		union select 
+		''svc_nbr'' as filter, get_jsonb_values_by_key (json_output, ''svc_nbr'') as value
+		from parsed_keys
+		union select 
+		''svc_code'' as filter, get_jsonb_values_by_key (json_output, ''svc_code'') as value
+		from parsed_keys
+		union select 
+		''svc_name'' as filter, get_jsonb_values_by_key (json_output, ''svc_name'')::citext as value
+		from parsed_keys
+		union select 
+		''status_code'' as filter, get_jsonb_values_by_key (json_output, ''status_code'')::citext as value
+		from parsed_keys
+		;
 
---	create table res as select acct.acct_nbr, acct.acct_code, fac.fac_nbr, fac.fac_code, fac.fac_name, fac.create_ts, fac.update_ts 
---	from account acct join facility fac on acct.id = fac.acct_id limit 0;
+--	drop table if exists res;
+--	create table res as select acct.acct_nbr, fac.fac_nbr, a.asset_nbr, a.sys_id, s.svc_nbr, s.svc_code, s.svc_name, s.status_code, s.create_ts, s.update_ts
+--	from account acct join facility fac on acct.id = fac.acct_id join asset a on fac.id = a.fac_id join service s on a.id = s.asset_id limit 0;
+--	
+--	insert into res
 
 	RETURN QUERY
-	with acct_cte_condition as (
-		select acc.*
-		from account acc
-		join parsed_values v on acc.acct_nbr = v.acct_nbr
-	),
-	acct_cte_no_condition as (
-		select acc.*
-		from account acc
-	),
-	fac_cte_condition as (
-		SELECT f.*
-		FROM facility f
-		JOIN parsed_values v ON f.fac_nbr = v.fac_nbr
-	),
-	fac_cte_no_condition as (
-		select f.*
-		from facility f
-	),
-	asset_cte_condition as (
-		select a.*
-		from asset a
-		join parsed_values v on a.asset_nbr = v.asset_nbr
-		union
-		select a.*
-		from asset a
-		join parsed_values v on a.sys_id = v.sys_id
-	),
-	asset_cte_no_condition as (
-		select a.*
-		from asset a
-	),
-	service_cte_condition as (
-		select s.*
-		from service s
-		join parsed_values v on s.svc_nbr = v.svc_nbr
-		union 
-		select s.*
-		from service s
-		join parsed_values v on s.svc_code = v.svc_code
-		union 
-		select s.*
-		from service s
-		join parsed_values v on s.svc_name = v.svc_name
-		union 
-		select s.*
-		from service s
-		join parsed_values v on s.status_code = v.status_code
-	
-	),
-	service_cte_no_condition as (
-		select s.*
-		from service s	
-	)
-
---	insert into res
-	
-	select acct.acct_nbr, fac.fac_nbr, ass.asset_nbr, ass.sys_id, ser.svc_nbr, ser.svc_code, ser.svc_name, ser.status_code, ser.create_ts, ser.update_ts
-	from
-	(
-		select * from acct_cte_condition
-		UNION
-		select * from acct_cte_no_condition where (select count(*) from acct_cte_condition) = 0
-	) as acct
-	join
-	(
-		select * from fac_cte_condition
-		UNION
-		select * from fac_cte_no_condition where (select count(*) from fac_cte_condition) = 0
-	) as fac
-		on acct.id = fac.acct_id
-	join
-	(
-		select * from asset_cte_condition
-		union
-		select * from asset_cte_no_condition where (select count(*) from asset_cte_condition) = 0
-	) as ass on fac.id = ass.fac_id
-	join
-	(
-		select * from service_cte_condition
-		union
-		select * from service_cte_no_condition where (select count(*) from service_cte_condition) = 0
-	) as ser on ass.id = ser.asset_id
-	join 
-		user_facility uf on fac.id = uf.fac_id
-	WHERE
-		(uf.user_id = p_user_id OR p_user_id is null);
-
+	SELECT
+		acc.acct_nbr, fac.fac_nbr, a.asset_nbr, a.sys_id, s.svc_nbr, s.svc_code, s.svc_name, s.status_code, s.create_ts, s.update_ts
+	FROM account acc
+	JOIN facility fac ON acc.id = fac.acct_id 
+	JOIN asset a ON fac.id = a.fac_id 
+	JOIN service s on a.id = s.asset_id
+	JOIN user_facility uf on fac.id = uf.fac_id
+	WHERE 
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''acct_nbr'' AND acc.acct_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''acct_nbr'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''fac_nbr'' AND fac.fac_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''fac_nbr'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''asset_nbr'' AND a.asset_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''asset_nbr'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''sys_id'' AND a.sys_id = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''sys_id'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''svc_nbr'' AND s.svc_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''svc_nbr'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''svc_code'' AND s.svc_code = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''svc_code'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''svc_name'' AND s.svc_name = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''svc_name'') = 0
+		)
+		AND
+		(
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''status_code'' AND s.status_code = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''status_code'') = 0
+		)
+		AND	(uf.user_id = p_user_id OR p_user_id is null);
+		
 END;
 ' LANGUAGE plpgsql;
 /

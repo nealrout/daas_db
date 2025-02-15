@@ -20,7 +20,7 @@ END;
 CALL drop_functions_by_name('clean_event_notification_buffer');
 /
 -- Stored procedure to get all items
-CREATE OR REPLACE FUNCTION clean_event_notification_buffer(p_jsonb jsonb)
+CREATE OR REPLACE FUNCTION clean_event_notification_buffer(p_jsonb jsonb, p_channel text)
 RETURNS VOID AS '
 BEGIN
 	DELETE FROM event_notification_buffer b
@@ -28,7 +28,9 @@ BEGIN
 		(
 				SELECT b.id, b.channel, b.payload
 				FROM event_notification_buffer b_in
-				JOIN get_jsonb_values_by_key (p_jsonb, ''id'') j ON b_in.id = j.value::int
+				JOIN get_jsonb_values_by_key (p_jsonb, ''asset_nbr'') j 
+					ON b_in.payload = j.value and b_in.channel = p_channel
+
 		) AS q
 		WHERE b.channel = q.channel AND b.payload = q.payload);
 END;

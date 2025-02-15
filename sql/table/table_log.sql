@@ -17,3 +17,7 @@ DROP INDEX IF EXISTS idx_log_message_level;
 /
 CREATE INDEX idx_log_message_level ON log(message, level);
 /
+DROP INDEX IF EXISTS idx_log_file_name;
+/
+CREATE INDEX idx_log_file_name ON log(file_name);
+/

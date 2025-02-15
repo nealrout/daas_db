@@ -10,7 +10,7 @@ BEGIN
     SELECT 
 		asset.id, asset.asset_nbr, asset.sys_id, 
 		facility.fac_code, 
-		service.service_nbr, service.service_code, service.service_name, service.status_code, service.create_ts, service.update_ts
+		service.svc_nbr, service.svc_code, service.svc_name, service.status_code, service.create_ts, service.update_ts
 	FROM 
 		asset asset
 		JOIN service service on asset.id = service.asset_id

@@ -125,6 +125,9 @@ BEGIN
     FROM facility f
     WHERE upper(f.fac_nbr) = ''UNKNOWN'';
 
+	drop table if exists temp_json_data;
+	drop table if exists update_stage;
+
 	CREATE TEMP TABLE temp_json_data AS
 	SELECT 
 	    --(p_jsonb ->> ''id'')::bigint AS id,

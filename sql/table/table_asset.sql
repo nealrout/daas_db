@@ -6,7 +6,7 @@ create table if not exists asset (
     asset_nbr TEXT not null,
     asset_code TEXT null,
     sys_id TEXT null,
-    status_code TEXT not null default 'UNKNOWN',
+    status_code CITEXT not null default 'UNKNOWN',
     create_ts timestamptz,
     update_ts timestamptz default now()
 );

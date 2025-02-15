@@ -1,12 +1,12 @@
 
 CALL drop_functions_by_name('get_index_log');
 /
-CREATE OR REPLACE FUNCTION get_index_log(p_domain TEXT, p_status_code TEXT)
-RETURNS TABLE(id bigint, domain text, status_code TEXT, description TEXT) AS ' 
+CREATE OR REPLACE FUNCTION get_index_log(p_domain TEXT, p_status_code CITEXT)
+RETURNS TABLE(id bigint, domain text, status_code CITEXT, description TEXT) AS ' 
 DECLARE
 BEGIN
     p_status_code = UPPER(p_status_code);
-    
+
     RETURN QUERY
     select i.id, i.domain, i.status_code, i.description
     from index_log i
@@ -19,8 +19,8 @@ END;
 /
 CALL drop_functions_by_name('upsert_index_log');
 /
-CREATE OR REPLACE FUNCTION upsert_index_log(p_id bigint, p_domain TEXT, p_status_code TEXT, p_description TEXT)
-RETURNS TABLE(id bigint, domain text, status_code TEXT, description TEXT) AS ' 
+CREATE OR REPLACE FUNCTION upsert_index_log(p_id bigint, p_domain TEXT, p_status_code CITEXT, p_description TEXT)
+RETURNS TABLE(id bigint, domain text, status_code CITEXT, description TEXT) AS ' 
 DECLARE
 BEGIN
 

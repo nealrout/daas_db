@@ -2,16 +2,17 @@ CALL drop_functions_by_name('get_asset');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_asset(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
-RETURNS TABLE(id BIGINT, fac_nbr TEXT, fac_code TEXT, asset_nbr TEXT, sys_id TEXT, create_ts timestamptz, update_ts timestamptz) 
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT,status_code citext, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
     SELECT 
-		asset.id, facility.fac_nbr, facility.fac_code , asset.asset_nbr, asset.sys_id, asset.create_ts, asset.update_ts
+		acc.acct_nbr, facility.fac_nbr, asset.asset_nbr, asset.sys_id, asset.status_code, asset.create_ts, asset.update_ts
 	FROM 
 		asset asset
     	JOIN facility facility on asset.fac_id = facility.id
 		JOIN user_facility uf on facility.id = uf.fac_id
+		JOIN account acc on facility.acct_id = acc.id
 	WHERE 
 		(
 			(p_source_ts IS NOT NULL AND asset.update_ts >= p_source_ts)
@@ -33,7 +34,7 @@ CALL drop_functions_by_name('get_asset_by_json');
 /
 -- Stored procedure to get an asset by ID
 CREATE OR REPLACE FUNCTION get_asset_by_json(p_jsonb jsonb, p_user_id bigint default NULL)
-RETURNS TABLE(acct_nbr text, fac_nbr text, asset_nbr text, sys_id text, status_code CITEXT, create_ts timestamptz, update_ts timestamptz)
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
@@ -117,7 +118,7 @@ CALL drop_functions_by_name('upsert_asset_from_json');
 CREATE OR REPLACE FUNCTION upsert_asset_from_json(
     p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
 ) 
-RETURNS TABLE(id BIGINT, asset_nbr TEXT, sys_id TEXT, fac_nbr TEXT, fac_code TEXT) AS ' 
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
 	unknown_fac_id bigint;
 BEGIN
@@ -133,7 +134,9 @@ BEGIN
 	    --(p_jsonb ->> ''id'')::bigint AS id,
 		p_jsonb ->> ''fac_nbr'' AS fac_nbr,	    
 		p_jsonb ->> ''asset_nbr'' AS asset_nbr,
-	    p_jsonb ->> ''sys_id'' AS sys_id
+		p_jsonb ->> ''asset_code'' AS asset_code,
+	    p_jsonb ->> ''sys_id'' AS sys_id,
+		p_jsonb ->> ''status_code'' AS status_code
 	FROM jsonb_array_elements(p_jsonb_in::JSONB) AS p_jsonb;
 
 	DELETE from temp_json_data t where t.asset_nbr IS NULL;
@@ -143,7 +146,9 @@ BEGIN
 		coalesce(f.id) as fac_id,
 		coalesce(t.fac_nbr, f.fac_nbr) as fac_nbr, 
 		coalesce(t.asset_nbr, a.asset_nbr) as asset_nbr, 
-		coalesce(t.sys_id, a.sys_id) as sys_id
+		coalesce(t.asset_code, a.asset_code) as asset_code, 
+		coalesce(t.sys_id, a.sys_id) as sys_id,
+		coalesce(t.status_code, a.status_code) as status_code
 	FROM	
 	facility f 
 	join asset a on f.Id = a.fac_id
@@ -168,11 +173,13 @@ BEGIN
 	WHEN MATCHED THEN
 	    UPDATE SET 
 	        sys_id = source.sys_id,
+			asset_code = source.asset_code,
 	        fac_id = source.fac_id,
+			status_code = source.status_code,
 	        update_ts = now()
 	WHEN NOT MATCHED THEN
-	    INSERT (asset_nbr, sys_id, fac_id, update_ts)
-	    VALUES (source.asset_nbr, source.sys_id, source.fac_id, now());
+	    INSERT (asset_nbr, sys_id, asset_code, fac_id, status_code, create_ts)
+	    VALUES (source.asset_nbr, source.sys_id, source.asset_code, source.fac_id, source.status_code, now());
 
     -- Raise event for consumers
     FOR asset_nbr IN
@@ -187,9 +194,10 @@ BEGIN
 	
     -- Return the updated records
     RETURN QUERY 
-    SELECT a.id, a.asset_nbr, a.sys_id, f.fac_nbr, f.fac_code
+    SELECT acc.acct_nbr, f.fac_nbr, a.asset_nbr, a.sys_id, a.status_code, a.create_ts, a.update_ts
     FROM asset a
     JOIN facility f ON a.fac_id = f.id
+	JOIN account acc on f.acct_id = acc.id
 	JOIN update_stage t ON a.asset_nbr = t.asset_nbr;
 END;
 

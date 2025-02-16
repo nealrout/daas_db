@@ -68,3 +68,83 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 /
+CALL drop_functions_by_name('upsert_account_from_json');
+/
+CREATE OR REPLACE FUNCTION upsert_account_from_json(
+    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
+) 
+RETURNS TABLE(acct_nbr text, acct_code text, acct_name citext, create_ts timestamptz, update_ts timestamptz) AS ' 
+DECLARE
+BEGIN
+	-- These drop statements are not required when deployed (they auto drop when out of scope).
+	-- These are here to help when needing to test in a local session.
+	drop table if exists temp_json_data;
+	drop table if exists update_stage;
+
+	CREATE TEMP TABLE temp_json_data AS
+	SELECT 
+		p_jsonb ->> ''acct_nbr'' AS acct_nbr,	    
+		p_jsonb ->> ''acct_code'' AS acct_code,
+		p_jsonb ->> ''acct_name'' AS acct_name
+	FROM jsonb_array_elements(p_jsonb_in::JSONB) AS p_jsonb;
+
+	DELETE from temp_json_data t where t.acct_nbr IS NULL;
+
+	CREATE TEMP TABLE update_stage AS
+	SELECT 
+		acc.id as id,
+		coalesce(t.acct_nbr, acc.acct_nbr) as acct_nbr, 
+		coalesce(t.acct_code, acc.acct_code) as acct_code, 
+		coalesce(t.acct_name, acc.acct_name) as acct_name
+	FROM	
+	temp_json_data t
+	left join account acc on t.acct_nbr = acc.acct_nbr;
+
+	-- remove upserts where the user does not have access to the facility
+	IF p_user_id IS NOT NULL THEN
+
+		DELETE FROM update_stage t
+		USING facility f
+		WHERE t.id = f.acct_id 
+		AND NOT EXISTS (
+			SELECT 1 
+			FROM user_facility uf 
+			WHERE uf.fac_id = f.id 
+			AND uf.user_id = p_user_id
+		);
+
+	END IF;
+
+	-- Perform UPSERT: Insert new records or update existing ones
+	MERGE INTO account AS target
+	USING update_stage AS source
+	ON target.acct_nbr = source.acct_nbr
+	WHEN MATCHED THEN
+	    UPDATE SET 
+	        acct_code = source.acct_code,
+			acct_name = source.acct_name,
+	        update_ts = now()
+	WHEN NOT MATCHED THEN
+	    INSERT (acct_nbr, acct_code, acct_name, create_ts)
+	    VALUES (source.acct_nbr, source.acct_code, source.acct_name, now());
+
+    -- Raise event for consumers
+    FOR acct_nbr IN
+        SELECT acc.acct_nbr 
+		FROM account acc
+		JOIN update_stage t ON acc.acct_nbr = t.acct_nbr
+    LOOP
+		INSERT INTO event_notification_buffer(channel, payload, create_ts)
+		VALUES (p_channel_name, acct_nbr, now());
+        PERFORM pg_notify(p_channel_name, acct_nbr);
+    END LOOP;
+	
+    -- Return the updated records
+    RETURN QUERY 
+    SELECT acc.acct_nbr, acc.acct_code, acc.acct_name, acc.create_ts, acc.update_ts
+    FROM account acc
+	JOIN update_stage t ON acc.acct_nbr = t.acct_nbr;
+END;
+
+' LANGUAGE plpgsql;
+/

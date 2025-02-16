@@ -141,13 +141,10 @@ CREATE OR REPLACE FUNCTION upsert_service_from_json(
 RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, svc_nbr TEXT, svc_code TEXT, svc_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
 BEGIN
+	-- These drop statements are not required when deployed (they auto drop when out of scope).
+	-- These are here to help when needing to test in a local session.
 	drop table if exists temp_json_data;
 	drop table if exists update_stage;
-
--- SELECT 
--- a. asset_nbr, s.svc_nbr, s.svc_code, s.svc_name, s.status_code
--- FROM service s
--- JOIN asset a ON s.asset_id = a.id;
 
 	CREATE TEMP TABLE temp_json_data AS
 	SELECT 
@@ -160,26 +157,32 @@ BEGIN
 
 	DELETE from temp_json_data t where t.svc_nbr IS NULL;
 
-	CREATE TABLE update_stage AS
+	CREATE TEMP TABLE update_stage AS
 	SELECT 
 		a.fac_id,
-		a.id as asset_id,
 		coalesce(a_new.id, s.asset_id) as target_asset_id,
 		coalesce(t.svc_nbr, s.svc_nbr) as svc_nbr, 
 		coalesce(t.svc_code, s.svc_code) as svc_code, 
 		coalesce(t.svc_name, s.svc_name) as svc_name, 
-		coalesce(t.status_code, s.status_code, ''UNKNOWN'') as status_code
+		coalesce(sstate.status_code, s.status_code, ''UNKNOWN'') as status_code
 	FROM	
-	asset a
-	join service s on a.id = s.asset_id
-	JOIN temp_json_data t on s.svc_nbr = t.svc_nbr
-	left join asset a_new on t.asset_nbr = a_new.asset_nbr;
+	temp_json_data t
+	left join service s on t.svc_nbr = s.svc_nbr
+	left join asset a on s.asset_id = a.id
+	left join facility f on a.fac_id = f.id
+	left join asset a_new on t.asset_nbr = a_new.asset_nbr
+	left join service_status sstate on t.status_code = sstate.status_code;
 	
+	-- asset is a requirement to insert or update an sr.
+	DELETE from update_stage where target_asset_id IS NULL;
+
 	-- remove upserts where the user does not have access to the facility
 	IF p_user_id IS NOT NULL THEN
-		DELETE from update_stage t
-		WHERE 
-			NOT EXISTS (select 1 FROM user_facility uf WHERE t.fac_id = uf.fac_id AND uf.user_id = p_user_id);
+		DELETE FROM update_stage t
+		USING asset a 
+		WHERE t.target_asset_id = a.id
+		AND NOT EXISTS 
+			(select 1 FROM user_facility uf WHERE a.fac_id = uf.fac_id AND uf.user_id = p_user_id);
 	END IF;
 
 	-- Perform UPSERT: Insert new records or update existing ones
@@ -195,7 +198,7 @@ BEGIN
 	        update_ts = now()
 	WHEN NOT MATCHED THEN
 	    INSERT (asset_id, svc_nbr, svc_code, svc_name, status_code, create_ts)
-	    VALUES (source.target_asset_id, source.svc_nbr, source.sv_code, source,svc_name, source.status_code, now());
+	    VALUES (source.target_asset_id, source.svc_nbr, source.svc_code, source.svc_name, source.status_code, now());
 
     -- Raise event for consumers
     FOR svc_nbr IN
@@ -207,12 +210,6 @@ BEGIN
 		VALUES (p_channel_name, svc_nbr, now());
         PERFORM pg_notify(p_channel_name, asset_nbr);
     END LOOP;
-	
-
--- SELECT 
--- a. asset_nbr, s.svc_nbr, s.svc_code, s.svc_name, s.status_code
--- FROM service s
--- JOIN asset a ON s.asset_id = a.id;
 
     -- Return the updated records
     RETURN QUERY 

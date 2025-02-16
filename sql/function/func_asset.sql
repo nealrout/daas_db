@@ -2,12 +2,12 @@ CALL drop_functions_by_name('get_asset');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_asset(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
-RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT,status_code citext, create_ts timestamptz, update_ts timestamptz) 
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT,status_code citext, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
     SELECT 
-		acc.acct_nbr, facility.fac_nbr, asset.asset_nbr, asset.sys_id, asset.status_code, asset.create_ts, asset.update_ts
+		acc.acct_nbr, facility.fac_nbr, asset.asset_nbr, asset.sys_id, asset.asset_code, asset.status_code, asset.create_ts, asset.update_ts
 	FROM 
 		asset asset
     	JOIN facility facility on asset.fac_id = facility.id
@@ -34,7 +34,7 @@ CALL drop_functions_by_name('get_asset_by_json');
 /
 -- Stored procedure to get an asset by ID
 CREATE OR REPLACE FUNCTION get_asset_by_json(p_jsonb jsonb, p_user_id bigint default NULL)
-RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz)
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
@@ -79,7 +79,7 @@ BEGIN
 
 	RETURN QUERY
 	SELECT
-	acc.acct_nbr, fac.fac_nbr, a.asset_nbr, a.sys_id, a.status_code, a.create_ts, a.update_ts
+	acc.acct_nbr, fac.fac_nbr, a.asset_nbr, a.sys_id, a.asset_code, a.status_code, a.create_ts, a.update_ts
 	FROM account acc
 	JOIN facility fac ON acc.id = fac.acct_id 
 	JOIN asset a ON fac.id = a.fac_id 
@@ -118,7 +118,7 @@ CALL drop_functions_by_name('upsert_asset_from_json');
 CREATE OR REPLACE FUNCTION upsert_asset_from_json(
     p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
 ) 
-RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz) AS ' 
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
 	unknown_fac_id bigint;
 BEGIN
@@ -148,11 +148,12 @@ BEGIN
 		coalesce(t.asset_nbr, a.asset_nbr) as asset_nbr, 
 		coalesce(t.asset_code, a.asset_code) as asset_code, 
 		coalesce(t.sys_id, a.sys_id) as sys_id,
-		coalesce(t.status_code, a.status_code) as status_code
-	FROM	
-	facility f 
-	join asset a on f.Id = a.fac_id
-	JOIN temp_json_data t on a.asset_nbr = t.asset_nbr;
+		coalesce(astat.status_code, a.status_code, ''UNKNOWN'') as status_code
+	FROM
+	temp_json_data t
+	left join asset a on t.asset_nbr = a.asset_nbr
+	left join facility f on a.fac_id = f.id
+	left join asset_status astat on t.status_code = astat.status_code;
 
 	update update_stage t
 	set fac_id = coalesce(f.id, unknown_fac_id)
@@ -194,7 +195,7 @@ BEGIN
 	
     -- Return the updated records
     RETURN QUERY 
-    SELECT acc.acct_nbr, f.fac_nbr, a.asset_nbr, a.sys_id, a.status_code, a.create_ts, a.update_ts
+    SELECT acc.acct_nbr, f.fac_nbr, a.asset_nbr, a.sys_id, a.asset_code, a.status_code, a.create_ts, a.update_ts
     FROM asset a
     JOIN facility f ON a.fac_id = f.id
 	JOIN account acc on f.acct_id = acc.id

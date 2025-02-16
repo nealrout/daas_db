@@ -1,7 +1,7 @@
 CALL drop_functions_by_name('get_service');
 /
 -- Stored procedure to get all items
-CREATE OR REPLACE FUNCTION get_service(p_user_id bigint)
+CREATE OR REPLACE FUNCTION get_service(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
 RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, svc_nbr TEXT, svc_code TEXT, svc_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
@@ -15,7 +15,19 @@ BEGIN
 		JOIN account account on facility.acct_id = account.id
 		JOIN user_facility uf on facility.id = uf.fac_id
 	WHERE 
-		(uf.user_id = p_user_id OR p_user_id is null);
+		(
+			(p_source_ts IS NOT NULL AND service.update_ts >= p_source_ts)
+			OR 
+			p_source_ts IS NULL
+		)
+		AND
+		(
+			(p_target_ts IS NOT NULL AND service.update_ts <= p_target_ts)
+			OR
+			p_target_ts IS NULL
+		)
+		AND
+			(uf.user_id = p_user_id OR p_user_id is null);
 END;
 ' LANGUAGE plpgsql;
 /

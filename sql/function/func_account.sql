@@ -1,8 +1,8 @@
-CALL drop_functions_by_name('acct_code');
+CALL drop_functions_by_name('get_account');
 /
 -- Stored procedure to get all items
-CREATE OR REPLACE FUNCTION get_account(p_user_id bigint)
-RETURNS TABLE(acct_nbr TEXT, acct_code TEXT, acct_name TEXT, create_ts timestamptz, update_ts timestamptz) 
+CREATE OR REPLACE FUNCTION get_account(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
+RETURNS TABLE(acct_nbr TEXT, acct_code TEXT, acct_name CITEXT, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
@@ -11,8 +11,20 @@ BEGIN
 	FROM account ac
 	JOIN facility f on ac.id = f.acct_id
 	JOIN user_facility uf on f.id = uf.fac_id
-	WHERE 
-		(uf.user_id = p_user_id OR p_user_id is null);
+		WHERE 
+		(
+			(p_source_ts IS NOT NULL AND ac.update_ts >= p_source_ts)
+			OR 
+			p_source_ts IS NULL
+		)
+		AND
+		(
+			(p_target_ts IS NOT NULL AND ac.update_ts <= p_target_ts)
+			OR
+			p_target_ts IS NULL
+		)
+		AND
+			(uf.user_id = p_user_id OR p_user_id is null);
 END;
 ' LANGUAGE plpgsql;
 /

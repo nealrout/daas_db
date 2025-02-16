@@ -2,19 +2,17 @@ CALL drop_functions_by_name('get_service');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_service(p_user_id bigint)
-RETURNS TABLE(id BIGINT, asset_nbr TEXT, sys_id TEXT, fac_code TEXT, 
-	service_nbr TEXT, service_code TEXT, service_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz) 
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, svc_nbr TEXT, svc_code TEXT, svc_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
     SELECT 
-		asset.id, asset.asset_nbr, asset.sys_id, 
-		facility.fac_code, 
-		service.svc_nbr, service.svc_code, service.svc_name, service.status_code, service.create_ts, service.update_ts
+		account.acct_nbr, facility.fac_nbr, asset.asset_nbr, asset.sys_id, service.svc_nbr, service.svc_code, service.svc_name, service.status_code, service.create_ts, service.update_ts
 	FROM 
 		asset asset
 		JOIN service service on asset.id = service.asset_id
 		JOIN facility facility on asset.fac_id = facility.id
+		JOIN account account on facility.acct_id = account.id
 		JOIN user_facility uf on facility.id = uf.fac_id
 	WHERE 
 		(uf.user_id = p_user_id OR p_user_id is null);
@@ -25,7 +23,7 @@ CALL drop_functions_by_name('get_service_by_json');
 /
 -- Stored procedure to get an asset by ID
 CREATE OR REPLACE FUNCTION get_service_by_json(p_jsonb jsonb, p_user_id bigint)
-RETURNS TABLE(acct_nbr TEXT, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, service_nbr TEXT, service_code TEXT, svc_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz)
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, svc_nbr TEXT, svc_code TEXT, svc_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
@@ -133,5 +131,98 @@ BEGIN
 		AND	(uf.user_id = p_user_id OR p_user_id is null);
 		
 END;
+' LANGUAGE plpgsql;
+/
+CALL drop_functions_by_name('upsert_service_from_json');
+/
+CREATE OR REPLACE FUNCTION upsert_service_from_json(
+    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint default null
+) 
+RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, svc_nbr TEXT, svc_code TEXT, svc_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz) AS ' 
+DECLARE
+BEGIN
+	drop table if exists temp_json_data;
+	drop table if exists update_stage;
+
+-- SELECT 
+-- a. asset_nbr, s.svc_nbr, s.svc_code, s.svc_name, s.status_code
+-- FROM service s
+-- JOIN asset a ON s.asset_id = a.id;
+
+	CREATE TEMP TABLE temp_json_data AS
+	SELECT 
+		p_jsonb ->> ''asset_nbr'' AS asset_nbr,	    
+		p_jsonb ->> ''svc_nbr'' AS svc_nbr,
+	    p_jsonb ->> ''svc_code'' AS svc_code,
+		p_jsonb ->> ''svc_name'' AS svc_name,
+		p_jsonb ->> ''status_code'' AS status_code
+	FROM jsonb_array_elements(p_jsonb_in::JSONB) AS p_jsonb;
+
+	DELETE from temp_json_data t where t.svc_nbr IS NULL;
+
+	CREATE TABLE update_stage AS
+	SELECT 
+		a.fac_id,
+		a.id as asset_id,
+		coalesce(a_new.id, s.asset_id) as target_asset_id,
+		coalesce(t.svc_nbr, s.svc_nbr) as svc_nbr, 
+		coalesce(t.svc_code, s.svc_code) as svc_code, 
+		coalesce(t.svc_name, s.svc_name) as svc_name, 
+		coalesce(t.status_code, s.status_code, ''UNKNOWN'') as status_code
+	FROM	
+	asset a
+	join service s on a.id = s.asset_id
+	JOIN temp_json_data t on s.svc_nbr = t.svc_nbr
+	left join asset a_new on t.asset_nbr = a_new.asset_nbr;
+	
+	-- remove upserts where the user does not have access to the facility
+	IF p_user_id IS NOT NULL THEN
+		DELETE from update_stage t
+		WHERE 
+			NOT EXISTS (select 1 FROM user_facility uf WHERE t.fac_id = uf.fac_id AND uf.user_id = p_user_id);
+	END IF;
+
+	-- Perform UPSERT: Insert new records or update existing ones
+	MERGE INTO service AS target
+	USING update_stage AS source
+	ON target.svc_nbr = source.svc_nbr
+	WHEN MATCHED THEN
+	    UPDATE SET 
+	        asset_id = source.target_asset_id,
+	        svc_code = source.svc_code,
+			svc_name = source.svc_name,
+			status_code = source.status_code,
+	        update_ts = now()
+	WHEN NOT MATCHED THEN
+	    INSERT (asset_id, svc_nbr, svc_code, svc_name, status_code, create_ts)
+	    VALUES (source.target_asset_id, source.svc_nbr, source.sv_code, source,svc_name, source.status_code, now());
+
+    -- Raise event for consumers
+    FOR svc_nbr IN
+        SELECT s.svc_nbr
+		FROM service s
+		JOIN update_stage t ON s.svc_nbr = t.svc_nbr
+    LOOP
+		INSERT INTO event_notification_buffer(channel, payload, create_ts)
+		VALUES (p_channel_name, svc_nbr, now());
+        PERFORM pg_notify(p_channel_name, asset_nbr);
+    END LOOP;
+	
+
+-- SELECT 
+-- a. asset_nbr, s.svc_nbr, s.svc_code, s.svc_name, s.status_code
+-- FROM service s
+-- JOIN asset a ON s.asset_id = a.id;
+
+    -- Return the updated records
+    RETURN QUERY 
+    SELECT acc.acct_nbr, f.fac_nbr, a.asset_nbr, a.sys_id, s.svc_nbr, s.svc_code, s.svc_name, s.status_code, s.create_ts, s.update_ts
+    FROM service s
+    JOIN asset a on s.asset_id = a.id
+	JOIN facility f on a.fac_id = f.id
+	JOIN account acc on f.acct_id = acc.id
+	JOIN update_stage t ON s.svc_nbr = t.svc_nbr;
+END;
+
 ' LANGUAGE plpgsql;
 /

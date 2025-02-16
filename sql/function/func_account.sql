@@ -2,12 +2,12 @@ CALL drop_functions_by_name('get_account');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_account(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
-RETURNS TABLE(acct_nbr TEXT, acct_code TEXT, acct_name CITEXT, create_ts timestamptz, update_ts timestamptz) 
+RETURNS TABLE(acct_nbr TEXT, acct_code TEXT, acct_name CITEXT, fac_nbr JSONB, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
-    SELECT DISTINCT
-		ac.acct_nbr, ac.acct_code, ac.acct_name, ac.create_ts, ac.update_ts
+    SELECT
+		ac.acct_nbr, ac.acct_code, ac.acct_name, jsonb_agg(f.fac_nbr) as fac_nbr, ac.create_ts, ac.update_ts
 	FROM account ac
 	LEFT JOIN facility f on ac.id = f.acct_id
 	LEFT JOIN user_facility uf on f.id = uf.fac_id
@@ -24,7 +24,8 @@ BEGIN
 			p_target_ts IS NULL
 		)
 		AND
-			(uf.user_id = p_user_id OR p_user_id is null);
+			(uf.user_id = p_user_id OR p_user_id is null)
+	GROUP BY ac.acct_nbr, ac.acct_code, ac.acct_name, ac.create_ts, ac.update_ts;
 END;
 ' LANGUAGE plpgsql;
 /
@@ -33,7 +34,7 @@ CALL drop_functions_by_name('get_account_by_json');
 -- Stored procedure to get an asset by ID
 
 CREATE OR REPLACE FUNCTION get_account_by_json(p_jsonb jsonb, p_user_id bigint default NULL)
-RETURNS TABLE(acct_nbr text, acct_code text, acct_name CITEXT, create_ts timestamptz, update_ts timestamptz)
+RETURNS TABLE(acct_nbr text, acct_code text, acct_name CITEXT, fac_nbr JSONB, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
@@ -63,8 +64,8 @@ BEGIN
 
 
 	RETURN QUERY
-	select distinct 
-		acc.acct_nbr, acc.acct_code, acc.acct_name, acc.create_ts, acc.update_ts
+	select 
+		acc.acct_nbr, acc.acct_code, acc.acct_name, jsonb_agg(fac.fac_nbr) as fac_nbr, acc.create_ts, acc.update_ts
 	FROM account acc
 	left join 
 		facility fac on acc.id = fac.acct_id
@@ -75,7 +76,9 @@ BEGIN
 		EXISTS (SELECT 1 FROM parsed_values v WHERE v.filter = ''acct_nbr'' AND acc.acct_nbr = v.value)
 		OR (SELECT count(*) FROM parsed_values v WHERE v.filter = ''acct_nbr'') = 0
 		)
-		AND (uf.user_id = p_user_id OR p_user_id is null);
+		AND (uf.user_id = p_user_id OR p_user_id is null)
+	GROUP BY
+		acc.acct_nbr, acc.acct_code, acc.acct_name, acc.create_ts, acc.update_ts;
 
 END;
 ' LANGUAGE plpgsql;
@@ -85,7 +88,7 @@ CALL drop_functions_by_name('upsert_account_from_json');
 CREATE OR REPLACE FUNCTION upsert_account_from_json(
     p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
 ) 
-RETURNS TABLE(acct_nbr text, acct_code text, acct_name citext, create_ts timestamptz, update_ts timestamptz) AS ' 
+RETURNS TABLE(acct_nbr text, acct_code text, acct_name citext,fac_nbr JSONB, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
 BEGIN
 	-- These drop statements are not required when deployed (they auto drop when out of scope).
@@ -153,9 +156,12 @@ BEGIN
 	
     -- Return the updated records
     RETURN QUERY 
-    SELECT acc.acct_nbr, acc.acct_code, acc.acct_name, acc.create_ts, acc.update_ts
+    SELECT acc.acct_nbr, acc.acct_code, acc.acct_name, jsonb_agg(fac.fac_nbr), acc.create_ts, acc.update_ts
     FROM account acc
-	JOIN update_stage t ON acc.acct_nbr = t.acct_nbr;
+	LEFT JOIN facility fac on acc.fac_id = fac.id
+	JOIN update_stage t ON acc.acct_nbr = t.acct_nbr
+	GROUP BY
+		acc.acct_nbr, acc.acct_code, acc.acct_name, acc.create_ts, acc.update_ts;
 END;
 
 ' LANGUAGE plpgsql;

@@ -9,8 +9,8 @@ BEGIN
     SELECT DISTINCT
 		ac.acct_nbr, ac.acct_code, ac.acct_name, ac.create_ts, ac.update_ts
 	FROM account ac
-	JOIN facility f on ac.id = f.acct_id
-	JOIN user_facility uf on f.id = uf.fac_id
+	LEFT JOIN facility f on ac.id = f.acct_id
+	LEFT JOIN user_facility uf on f.id = uf.fac_id
 		WHERE 
 		(
 			(p_source_ts IS NOT NULL AND ac.update_ts >= p_source_ts)
@@ -66,9 +66,9 @@ BEGIN
 	select distinct 
 		acc.acct_nbr, acc.acct_code, acc.acct_name, acc.create_ts, acc.update_ts
 	FROM account acc
-	join 
+	left join 
 		facility fac on acc.id = fac.acct_id
-	join 
+	left join 
 		user_facility uf on fac.id = uf.fac_id
 	WHERE 
 		(

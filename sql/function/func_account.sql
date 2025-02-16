@@ -158,7 +158,7 @@ BEGIN
     RETURN QUERY 
     SELECT acc.acct_nbr, acc.acct_code, acc.acct_name, jsonb_agg(fac.fac_nbr), acc.create_ts, acc.update_ts
     FROM account acc
-	LEFT JOIN facility fac on acc.fac_id = fac.id
+	LEFT JOIN facility fac on acc.id = fac.acct_id
 	JOIN update_stage t ON acc.acct_nbr = t.acct_nbr
 	GROUP BY
 		acc.acct_nbr, acc.acct_code, acc.acct_name, acc.create_ts, acc.update_ts;

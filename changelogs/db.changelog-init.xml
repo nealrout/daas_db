@@ -134,5 +134,9 @@
         <sqlFile path="sql/function/func_index_log.sql" endDelimiter="/"/>
     </changeSet>    
 
+    <changeSet id="func_integration_testing" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_integration_testing.sql" endDelimiter="/"/>
+    </changeSet>    
+
 
 </databaseChangeLog>

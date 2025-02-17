@@ -220,7 +220,7 @@ BEGIN
     LOOP
 		INSERT INTO event_notification_buffer(channel, payload, create_ts)
 		VALUES (p_channel_name, svc_nbr, now());
-        PERFORM pg_notify(p_channel_name, asset_nbr);
+        PERFORM pg_notify(p_channel_name, svc_nbr);
     END LOOP;
 
     -- Return the updated records

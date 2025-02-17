@@ -28,7 +28,7 @@ BEGIN
 		(
 				SELECT b.id, b.channel, b.payload
 				FROM event_notification_buffer b_in
-				JOIN get_jsonb_values_by_key (p_jsonb, ''asset_nbr'') j 
+				JOIN get_jsonb_values_by_key (p_jsonb, ''domain_nbr'') j 
 					ON b_in.payload = j.value and b_in.channel = p_channel
 
 		) AS q

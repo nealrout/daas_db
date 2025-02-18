@@ -126,6 +126,7 @@ CREATE OR REPLACE FUNCTION upsert_facility_from_json(
 ) 
 RETURNS TABLE(acct_nbr text, fac_nbr text, fac_code text, fac_name CITEXT, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
+	v_unknown_acct_id bigint := (select id from account acc where acc.acct_nbr = ''UNKNOWN'');
 BEGIN
 	IF p_user_id IS NULL THEN
 		RETURN;
@@ -149,7 +150,7 @@ BEGIN
 	CREATE TEMP TABLE update_stage AS
 	SELECT 
 		f.id as fac_id,
-		coalesce(target_acc.id, acc.id) as target_acct_id,
+		coalesce(target_acc.id, acc.id, v_unknown_acct_id) as target_acct_id,
 		coalesce(t.acct_nbr, acc.acct_nbr) as acct_nbr, 
 		coalesce(t.fac_nbr, f.fac_nbr) as fac_nbr, 
 		coalesce(t.fac_code, f.fac_code) as fac_code, 

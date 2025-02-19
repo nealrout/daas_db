@@ -68,7 +68,7 @@ BEGIN
 		''account_nbr'' as filter, get_jsonb_values_by_key (json_output, ''account_nbr'') as value
 		from parsed_keys
 		union select 
-		''acct_code'' as filter, get_jsonb_values_by_key (json_output, ''acct_code'') as value
+		''account_code'' as filter, get_jsonb_values_by_key (json_output, ''account_code'') as value
 		from parsed_keys
 		union select 
 		''facility_nbr'' as filter, get_jsonb_values_by_key (json_output, ''facility_nbr'') as value
@@ -80,7 +80,7 @@ BEGIN
 		''facility_name'' as filter, get_jsonb_values_by_key (json_output, ''facility_name'')::CITEXT as value
 		from parsed_keys;
 
---	create table res as select acct.account_nbr, acct.acct_code, fac.facility_nbr, fac.facility_code, fac.facility_name, fac.create_ts, fac.update_ts 
+--	create table res as select acct.account_nbr, acct.account_code, fac.facility_nbr, fac.facility_code, fac.facility_name, fac.create_ts, fac.update_ts 
 --	from account acct join facility fac on acct.id = fac.account_id limit 0;
 
 	RETURN QUERY
@@ -96,8 +96,8 @@ BEGIN
 		)
 		AND
 		(
-		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''acct_code'' AND acc.acct_code = v.value)
-		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''acct_code'') = 0
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''account_code'' AND acc.account_code = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''account_code'') = 0
 		)
 		AND
 		(

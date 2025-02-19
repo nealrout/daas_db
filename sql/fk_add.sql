@@ -8,7 +8,7 @@ BEGIN
     ) THEN
         ALTER TABLE facility
         ADD CONSTRAINT fk_account_id
-        FOREIGN KEY (acct_id) REFERENCES account(id);
+        FOREIGN KEY (account_id) REFERENCES account(id);
         RAISE NOTICE ''Foreign key constraint fk_account_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_account_id already exists.'';
@@ -25,7 +25,7 @@ BEGIN
     ) THEN
         ALTER TABLE asset
         ADD CONSTRAINT fk_facility_id
-        FOREIGN KEY (fac_id) REFERENCES facility(id);
+        FOREIGN KEY (facility_id) REFERENCES facility(id);
         RAISE NOTICE ''Foreign key constraint fk_facility_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_facility_id already exists.'';
@@ -42,7 +42,7 @@ BEGIN
     ) THEN
         ALTER TABLE user_facility
         ADD CONSTRAINT fk_facility_id
-        FOREIGN KEY (fac_id) REFERENCES facility(id);
+        FOREIGN KEY (facility_id) REFERENCES facility(id);
         RAISE NOTICE ''Foreign key constraint fk_facility_id has been added.'';
     ELSE
         RAISE NOTICE ''Foreign key constraint fk_facility_id already exists.'';

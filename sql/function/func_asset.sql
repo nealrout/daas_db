@@ -2,17 +2,17 @@ CALL drop_functions_by_name('get_asset');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_asset(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
-RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT,status_code citext, create_ts timestamptz, update_ts timestamptz) 
+RETURNS TABLE(account_nbr text, facility_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT,status_code citext, create_ts timestamptz, update_ts timestamptz) 
 AS '
 BEGIN
     RETURN QUERY
     SELECT 
-		acc.acct_nbr, facility.fac_nbr, asset.asset_nbr, asset.sys_id, asset.asset_code, asset.status_code, asset.create_ts, asset.update_ts
+		acc.account_nbr, facility.facility_nbr, asset.asset_nbr, asset.sys_id, asset.asset_code, asset.status_code, asset.create_ts, asset.update_ts
 	FROM 
 		asset asset
-    	JOIN facility facility on asset.fac_id = facility.id
-		JOIN user_facility uf on facility.id = uf.fac_id
-		JOIN account acc on facility.acct_id = acc.id
+    	JOIN facility facility on asset.facility_id = facility.id
+		JOIN user_facility uf on facility.id = uf.facility_id
+		JOIN account acc on facility.account_id = acc.id
 	WHERE 
 		(
 			(p_source_ts IS NOT NULL AND asset.update_ts >= p_source_ts)
@@ -34,12 +34,12 @@ CALL drop_functions_by_name('get_asset_by_json');
 /
 -- Stored procedure to get an asset by ID
 CREATE OR REPLACE FUNCTION get_asset_by_json(p_jsonb jsonb, p_user_id bigint default NULL)
-RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz)
+RETURNS TABLE(account_nbr text, facility_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
---    "acct_nbr": ["ACCT_NBR_09"]
---    ,"fac_nbr": ["FAC_NBR_09", "FAC_NBR_20"]
+--    "account_nbr": ["ACCT_NBR_09"]
+--    ,"facility_nbr": ["FAC_NBR_09", "FAC_NBR_20"]
 --    ,"asset_nbr": ["asset_82", "asset_83"]
 --    ,"sys_id": ["system_03","system_02"]
 --    ,"status_code": ["up"]
@@ -56,10 +56,10 @@ BEGIN
 
 	create temp table parsed_values as
 	select 
-		''acct_nbr'' as filter, get_jsonb_values_by_key (json_output, ''acct_nbr'') as value
+		''account_nbr'' as filter, get_jsonb_values_by_key (json_output, ''account_nbr'') as value
 		from parsed_keys
 		union select 
-		''fac_nbr'' as filter, get_jsonb_values_by_key (json_output, ''fac_nbr'') as value
+		''facility_nbr'' as filter, get_jsonb_values_by_key (json_output, ''facility_nbr'') as value
 		from parsed_keys
 		union select 
 		''asset_nbr'' as filter, get_jsonb_values_by_key (json_output, ''asset_nbr'') as value
@@ -72,27 +72,27 @@ BEGIN
 		from parsed_keys;
 
 --	drop table if exists res;
---	create table res as select acct.acct_nbr, fac.fac_nbr, a.asset_nbr, a.sys_id, a.status_code, a.create_ts, a.update_ts
---	from account acct join facility fac on acct.id = fac.acct_id join asset a on fac.id = a.fac_id limit 0;
+--	create table res as select acct.account_nbr, fac.facility_nbr, a.asset_nbr, a.sys_id, a.status_code, a.create_ts, a.update_ts
+--	from account acct join facility fac on acct.id = fac.account_id join asset a on fac.id = a.facility_id limit 0;
 	
 --	insert into res
 
 	RETURN QUERY
 	SELECT
-	acc.acct_nbr, fac.fac_nbr, a.asset_nbr, a.sys_id, a.asset_code, a.status_code, a.create_ts, a.update_ts
+	acc.account_nbr, fac.facility_nbr, a.asset_nbr, a.sys_id, a.asset_code, a.status_code, a.create_ts, a.update_ts
 	FROM account acc
-	JOIN facility fac ON acc.id = fac.acct_id 
-	JOIN asset a ON fac.id = a.fac_id 
-	JOIN user_facility uf on fac.id = uf.fac_id
+	JOIN facility fac ON acc.id = fac.account_id 
+	JOIN asset a ON fac.id = a.facility_id 
+	JOIN user_facility uf on fac.id = uf.facility_id
 	WHERE 
 		(
-		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''acct_nbr'' AND acc.acct_nbr = v.value)
-		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''acct_nbr'') = 0
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''account_nbr'' AND acc.account_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''account_nbr'') = 0
 		)
 		AND
 		(
-		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''fac_nbr'' AND fac.fac_nbr = v.value)
-		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''fac_nbr'') = 0
+		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''facility_nbr'' AND fac.facility_nbr = v.value)
+		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''facility_nbr'') = 0
 		)
 		AND
 		(
@@ -118,13 +118,13 @@ CALL drop_functions_by_name('upsert_asset_from_json');
 CREATE OR REPLACE FUNCTION upsert_asset_from_json(
     p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
 ) 
-RETURNS TABLE(acct_nbr text, fac_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz) AS ' 
+RETURNS TABLE(account_nbr text, facility_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
-	unknown_fac_id bigint;
+	unknown_facility_id bigint;
 BEGIN
-    SELECT f.id INTO unknown_fac_id
+    SELECT f.id INTO unknown_facility_id
     FROM facility f
-    WHERE upper(f.fac_nbr) = ''UNKNOWN'';
+    WHERE upper(f.facility_nbr) = ''UNKNOWN'';
 
 	drop table if exists temp_json_data;
 	drop table if exists update_stage;
@@ -132,7 +132,7 @@ BEGIN
 	CREATE TEMP TABLE temp_json_data AS
 	SELECT 
 	    --(p_jsonb ->> ''id'')::bigint AS id,
-		p_jsonb ->> ''fac_nbr'' AS fac_nbr,	    
+		p_jsonb ->> ''facility_nbr'' AS facility_nbr,	    
 		p_jsonb ->> ''asset_nbr'' AS asset_nbr,
 		p_jsonb ->> ''asset_code'' AS asset_code,
 	    p_jsonb ->> ''sys_id'' AS sys_id,
@@ -143,8 +143,8 @@ BEGIN
 
 	CREATE TEMP TABLE update_stage AS
 	SELECT 
-		coalesce(f.id) as fac_id,
-		coalesce(t.fac_nbr, f.fac_nbr) as fac_nbr, 
+		coalesce(f.id) as facility_id,
+		coalesce(t.facility_nbr, f.facility_nbr) as facility_nbr, 
 		coalesce(t.asset_nbr, a.asset_nbr) as asset_nbr, 
 		coalesce(t.asset_code, a.asset_code) as asset_code, 
 		coalesce(t.sys_id, a.sys_id) as sys_id,
@@ -152,19 +152,19 @@ BEGIN
 	FROM
 	temp_json_data t
 	left join asset a on t.asset_nbr = a.asset_nbr
-	left join facility f on a.fac_id = f.id
+	left join facility f on a.facility_id = f.id
 	left join asset_status astat on t.status_code = astat.status_code;
 
 	update update_stage t
-	set fac_id = coalesce(f.id, unknown_fac_id)
+	set facility_id = coalesce(f.id, unknown_facility_id)
 	from facility f
-	where t.fac_nbr = f.fac_nbr;
+	where t.facility_nbr = f.facility_nbr;
 	
 	-- remove upserts where the user does not have access to the facility
 	IF p_user_id IS NOT NULL THEN
 		DELETE from update_stage t
 		WHERE 
-			NOT EXISTS (select 1 FROM user_facility uf WHERE t.fac_id = uf.fac_id AND uf.user_id = p_user_id);
+			NOT EXISTS (select 1 FROM user_facility uf WHERE t.facility_id = uf.facility_id AND uf.user_id = p_user_id);
 	END IF;
 
 	-- Perform UPSERT: Insert new records or update existing ones
@@ -175,12 +175,12 @@ BEGIN
 	    UPDATE SET 
 	        sys_id = source.sys_id,
 			asset_code = source.asset_code,
-	        fac_id = source.fac_id,
+	        facility_id = source.facility_id,
 			status_code = source.status_code,
 	        update_ts = now()
 	WHEN NOT MATCHED THEN
-	    INSERT (asset_nbr, sys_id, asset_code, fac_id, status_code, create_ts)
-	    VALUES (source.asset_nbr, source.sys_id, source.asset_code, source.fac_id, source.status_code, now());
+	    INSERT (asset_nbr, sys_id, asset_code, facility_id, status_code, create_ts)
+	    VALUES (source.asset_nbr, source.sys_id, source.asset_code, source.facility_id, source.status_code, now());
 
     -- Raise event for consumers
     FOR asset_nbr IN
@@ -195,10 +195,10 @@ BEGIN
 	
     -- Return the updated records
     RETURN QUERY 
-    SELECT acc.acct_nbr, f.fac_nbr, a.asset_nbr, a.sys_id, a.asset_code, a.status_code, a.create_ts, a.update_ts
+    SELECT acc.account_nbr, f.facility_nbr, a.asset_nbr, a.sys_id, a.asset_code, a.status_code, a.create_ts, a.update_ts
     FROM asset a
-    JOIN facility f ON a.fac_id = f.id
-	JOIN account acc on f.acct_id = acc.id
+    JOIN facility f ON a.facility_id = f.id
+	JOIN account acc on f.account_id = acc.id
 	JOIN update_stage t ON a.asset_nbr = t.asset_nbr;
 END;
 

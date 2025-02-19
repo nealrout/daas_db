@@ -86,7 +86,7 @@ END;
 CALL drop_functions_by_name('upsert_account_from_json');
 /
 CREATE OR REPLACE FUNCTION upsert_account_from_json(
-    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
+    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint, p_parent_chennel_name TEXT default null
 ) 
 RETURNS TABLE(account_nbr text, account_code text, account_name citext,facility_nbr JSONB, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE

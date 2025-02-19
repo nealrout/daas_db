@@ -122,6 +122,12 @@ RETURNS TABLE(account_nbr text, facility_nbr TEXT, asset_nbr TEXT, sys_id TEXT, 
 DECLARE
 	unknown_facility_id bigint;
 BEGIN
+	-- Protect against malformed json based on what we are expecting.
+    IF jsonb_typeof(p_jsonb_in) != ''array'' THEN
+        RAISE WARNING ''Invalid JSONB input: Expected an array but got %'', jsonb_typeof(p_jsonb_in);
+        RETURN;
+    END IF;
+	
     SELECT f.id INTO unknown_facility_id
     FROM facility f
     WHERE upper(f.facility_nbr) = ''UNKNOWN'';

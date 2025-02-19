@@ -128,6 +128,12 @@ RETURNS TABLE(account_nbr text, facility_nbr text, facility_code text, facility_
 DECLARE
 	v_unknown_account_id bigint := (select id from account acc where acc.account_nbr = ''UNKNOWN'');
 BEGIN
+	-- Protect against malformed json based on what we are expecting.
+    IF jsonb_typeof(p_jsonb_in) != ''array'' THEN
+        RAISE WARNING ''Invalid JSONB input: Expected an array but got %'', jsonb_typeof(p_jsonb_in);
+        RETURN;
+    END IF;
+	
 	IF p_user_id IS NULL THEN
 		RETURN;
 	END IF;

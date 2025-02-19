@@ -148,7 +148,7 @@ END;
 CALL drop_functions_by_name('upsert_service_from_json');
 /
 CREATE OR REPLACE FUNCTION upsert_service_from_json(
-    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint default null
+    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint default null, p_parent_channel_name TEXT default null
 ) 
 RETURNS TABLE(account_nbr text, facility_nbr TEXT, asset_nbr TEXT, sys_id TEXT, service_nbr TEXT, service_code TEXT, service_name TEXT, status_code CITEXT, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
@@ -158,7 +158,7 @@ BEGIN
         RAISE WARNING ''Invalid JSONB input: Expected an array but got %'', jsonb_typeof(p_jsonb_in);
         RETURN;
     END IF;
-	
+
 	-- These drop statements are not required when deployed (they auto drop when out of scope).
 	-- These are here to help when needing to test in a local session.
 	drop table if exists temp_json_data;

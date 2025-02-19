@@ -51,7 +51,7 @@ BEGIN
 	drop table if exists parsed_keys;
 	drop table if exists parsed_values;
 
-	create table parsed_keys as
+	create temp table parsed_keys as
 	select * from iterate_json_keys(p_jsonb);
 
 	create temp table parsed_values as
@@ -116,7 +116,7 @@ END;
 CALL drop_functions_by_name('upsert_asset_from_json');
 /
 CREATE OR REPLACE FUNCTION upsert_asset_from_json(
-    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
+    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint, p_parent_chennel_name TEXT default null
 ) 
 RETURNS TABLE(account_nbr text, facility_nbr TEXT, asset_nbr TEXT, sys_id TEXT, asset_code TEXT, status_code citext, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
@@ -127,7 +127,7 @@ BEGIN
         RAISE WARNING ''Invalid JSONB input: Expected an array but got %'', jsonb_typeof(p_jsonb_in);
         RETURN;
     END IF;
-	
+
     SELECT f.id INTO unknown_facility_id
     FROM facility f
     WHERE upper(f.facility_nbr) = ''UNKNOWN'';

@@ -118,6 +118,10 @@
         <sqlFile path="sql/function/func_user_facility.sql" endDelimiter="/"/>
     </changeSet>
 
+    <changeSet id="func_auth_user" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_auth_user.sql" endDelimiter="/"/>
+    </changeSet>
+
     <changeSet id="func_service" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/function/func_service.sql" endDelimiter="/"/>
     </changeSet>

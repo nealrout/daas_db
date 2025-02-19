@@ -122,7 +122,7 @@ END;
 CALL drop_functions_by_name('upsert_facility_from_json');
 /
 CREATE OR REPLACE FUNCTION upsert_facility_from_json(
-    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint
+    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint, p_parent_channel_name TEXT default null
 ) 
 RETURNS TABLE(account_nbr text, facility_nbr text, facility_code text, facility_name CITEXT, create_ts timestamptz, update_ts timestamptz) AS ' 
 DECLARE
@@ -133,7 +133,7 @@ BEGIN
         RAISE WARNING ''Invalid JSONB input: Expected an array but got %'', jsonb_typeof(p_jsonb_in);
         RETURN;
     END IF;
-	
+
 	IF p_user_id IS NULL THEN
 		RETURN;
 	END IF;
@@ -194,15 +194,22 @@ BEGIN
 	)
 	INSERT INTO user_facility (user_id, facility_id, create_ts)
 	SELECT p_user_id, m.id, now() FROM merged m
-	LEFT JOIN user_facility uf on m.id = uf.facility_id
+	LEFT JOIN user_facility uf on m.id = uf.facility_id and p_user_id = uf.user_id
 	WHERE uf.facility_id IS NULL;
 
     -- Raise event for consumers
-    FOR facility_nbr IN
-        SELECT f.facility_nbr 
+    FOR account_nbr, facility_nbr IN
+        SELECT acc.account_nbr, f.facility_nbr 
 		FROM facility f
+		JOIN account acc on f.account_id = acc.id
 		JOIN update_stage t ON f.facility_nbr = t.facility_nbr
     LOOP
+		-- insert account now that we may have attached new facilities
+		INSERT INTO event_notification_buffer(channel, payload, create_ts)
+		VALUES (p_parent_channel_name, account_nbr, now());
+        PERFORM pg_notify(p_parent_channel_name, account_nbr);
+		
+		-- insert facility
 		INSERT INTO event_notification_buffer(channel, payload, create_ts)
 		VALUES (p_channel_name, facility_nbr, now());
         PERFORM pg_notify(p_channel_name, facility_nbr);

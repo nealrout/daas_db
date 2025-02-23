@@ -15,7 +15,7 @@ END;
 CALL drop_functions_by_name('add_user_facility');
 /
 -- Stored procedure to get an asset by ID
-CREATE OR REPLACE FUNCTION add_user_facility(p_jsonb jsonb, p_user_id bigint)
+CREATE OR REPLACE FUNCTION add_user_facility(p_jsonb jsonb, p_user_id bigint, p_delete_current_mappings bool default false)
 RETURNS TABLE(username character varying, facility_nbr TEXT, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE
@@ -36,6 +36,12 @@ BEGIN
 	select 
 		''facility_nbr'' as filter, get_jsonb_values_by_key (json_output, ''facility_nbr'') as value
 		from parsed_keys;
+
+	-- Pre delete all mappings, before adding new mappings.
+	IF p_delete_current_mappings THEN
+		delete from user_facility where user_id = p_user_id;
+	END IF;
+	
 
 	insert into user_facility (user_id, facility_id, create_ts)
 	select au.id, f.id, now()

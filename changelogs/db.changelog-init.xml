@@ -102,6 +102,10 @@
         <sqlFile path="sql/function/func_log.sql" endDelimiter="/"/>
     </changeSet>
 
+    <changeSet id="func_user" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_user.sql" endDelimiter="/"/>
+    </changeSet>
+
     <changeSet id="func_account" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/function/func_account.sql" endDelimiter="/"/>
     </changeSet>

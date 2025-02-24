@@ -2,19 +2,24 @@ CALL drop_functions_by_name('get_user');
 /
 -- Stored procedure to get all items
 CREATE OR REPLACE FUNCTION get_user(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
-RETURNS TABLE(username character varying, first_name character varying, last_name character varying, email character varying, is_staff bool, is_superuser bool, is_active bool, last_login timestamptz, fac_nbr jsonb)
+RETURNS TABLE(username character varying, first_name character varying, last_name character varying, email character varying, is_staff bool, is_superuser bool, is_active bool, last_login timestamptz, facility_nbr jsonb)
 AS '
 BEGIN
     RETURN QUERY
 
-    SELECT au.username, au.first_name, au.last_name, au.email, au.is_staff, au.is_superuser, au.is_active, au.last_login
-    ,jsonb_agg(f.facility_nbr) as facility_nbr
-    FROM auth_user au 
-    LEFT JOIN user_facility uf ON au.id = uf.user_id
-    LEFT JOIN facility f ON uf.facility_id  = f.Id
-    WHERE
-    	(au.id = p_user_id OR p_user_id is null)
-    GROUP BY au.username, au.first_name, au.last_name, au.email, au.is_staff, au.is_superuser, au.is_active, au.last_login;
+	SELECT au.username, au.first_name, au.last_name, au.email, au.is_staff, au.is_superuser, au.is_active, au.last_login
+	,jsonb_agg(f.facility_nbr) as facility_nbr
+	FROM auth_user au 
+	LEFT JOIN user_facility uf ON au.id = uf.user_id
+	LEFT JOIN facility f ON uf.facility_id  = f.Id
+	WHERE -- Person selecting this is a super user, or p_user_id was not specified
+		(
+			(SELECT count(*) FROM auth_user auin WHERE auin.is_superuser = TRUE AND auin.id = p_user_id) >0 
+			OR p_user_id IS NULL
+		)
+		OR au.id = p_user_id
+	GROUP BY au.username, au.first_name, au.last_name, au.email, au.is_staff, au.is_superuser, au.is_active, au.last_login;
+
 END;
 ' LANGUAGE plpgsql;
 /
@@ -23,7 +28,7 @@ CALL drop_functions_by_name('get_user_by_json');
 -- Stored procedure to get an asset by ID
 
 CREATE OR REPLACE FUNCTION get_user_by_json(p_jsonb jsonb, p_user_id bigint default NULL)
-RETURNS TABLE(username character varying, first_name character varying, last_name character varying, email character varying, is_staff bool, is_superuser bool, is_active bool, last_login timestamptz, fac_nbr jsonb)
+RETURNS TABLE(username character varying, first_name character varying, last_name character varying, email character varying, is_staff bool, is_superuser bool, is_active bool, last_login timestamptz, facility_nbr jsonb)
 AS '
 DECLARE
 --	p_jsonb jsonb := ''{
@@ -94,7 +99,7 @@ CALL drop_functions_by_name('upsert_user_from_json');
 CREATE OR REPLACE FUNCTION upsert_user_from_json(
     p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint, p_parent_chennel_name TEXT default null
 ) 
-RETURNS TABLE(username character varying, first_name character varying, last_name character varying, email character varying, is_staff bool, is_superuser bool, is_active bool, last_login timestamptz, fac_nbr jsonb) AS ' 
+RETURNS TABLE(username character varying, first_name character varying, last_name character varying, email character varying, is_staff bool, is_superuser bool, is_active bool, last_login timestamptz, facility_nbr jsonb) AS ' 
 DECLARE
 BEGIN
 

@@ -1,5 +1,17 @@
 CALL drop_functions_by_name('get_user_facility');
 /
+CREATE OR REPLACE FUNCTION get_user_facility(p_user_id BIGINT)
+RETURNS TABLE(facility_code TEXT) AS '
+BEGIN
+    RETURN QUERY 
+    SELECT f.facility_nbr
+    FROM auth_user au 
+    JOIN user_facility uf ON au.id = uf.user_id
+    JOIN facility f ON uf.facility_id = f.id
+    WHERE au.id = p_user_id;
+END;
+' LANGUAGE plpgsql;
+/
 CREATE OR REPLACE FUNCTION get_user_facility(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
 RETURNS TABLE(username character varying, facility_nbr jsonb) AS '
 BEGIN

@@ -1,6 +1,6 @@
-CALL drop_functions_by_name('get_user_facility');
+CALL drop_functions_by_name('get_userfacility_by_user');
 /
-CREATE OR REPLACE FUNCTION get_user_facility(p_user_id BIGINT)
+CREATE OR REPLACE FUNCTION get_userfacility_by_user(p_user_id BIGINT)
 RETURNS TABLE(facility_code TEXT) AS '
 BEGIN
     RETURN QUERY 
@@ -12,7 +12,9 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 /
-CREATE OR REPLACE FUNCTION get_user_facility(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
+CALL drop_functions_by_name('get_userfacility');
+/
+CREATE OR REPLACE FUNCTION get_userfacility(p_user_id bigint DEFAULT NULL, p_source_ts timestamptz DEFAULT NULL, p_target_ts timestamptz DEFAULT NULL)
 RETURNS TABLE(username character varying, facility_nbr jsonb) AS '
 BEGIN
     RETURN QUERY 
@@ -30,11 +32,11 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 /
-CALL drop_functions_by_name('get_user_facility_by_json');
+CALL drop_functions_by_name('get_userfacility_by_json');
 /
 -- Stored procedure to get an asset by ID
 
-CREATE OR REPLACE FUNCTION get_user_facility_by_json(p_jsonb jsonb, p_user_id bigint default NULL)
+CREATE OR REPLACE FUNCTION get_userfacility_by_json(p_jsonb jsonb, p_user_id bigint default NULL)
 RETURNS TABLE(username character varying, facility_nbr jsonb)
 AS '
 DECLARE
@@ -81,9 +83,9 @@ BEGIN
 END;
 ' LANGUAGE plpgsql;
 /
-CALL drop_functions_by_name('upsert_user_facility_from_json');
+CALL drop_functions_by_name('upsert_userfacility_from_json');
 /
-CREATE OR REPLACE FUNCTION upsert_user_facility_from_json(
+CREATE OR REPLACE FUNCTION upsert_userfacility_from_json(
     p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint, p_parent_chennel_name TEXT default null, p_delete_current_mappings bool default false
 ) 
 RETURNS TABLE(username character varying, facility_nbr jsonb) AS ' 
@@ -163,10 +165,10 @@ END;
 
 ' LANGUAGE plpgsql;
 /
-CALL drop_functions_by_name('add_user_facility');
+CALL drop_functions_by_name('add_userfacility');
 /
 -- Stored procedure to get an asset by ID
-CREATE OR REPLACE FUNCTION add_user_facility(p_jsonb jsonb, p_user_id bigint, p_delete_current_mappings bool default false)
+CREATE OR REPLACE FUNCTION add_userfacility(p_jsonb jsonb, p_user_id bigint, p_delete_current_mappings bool default false)
 RETURNS TABLE(username character varying, facility_nbr TEXT, create_ts timestamptz, update_ts timestamptz)
 AS '
 DECLARE

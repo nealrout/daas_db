@@ -10,7 +10,7 @@ BEGIN
 	SELECT au.username, au.first_name, au.last_name, au.email, au.is_staff, au.is_superuser, au.is_active, au.last_login
 	,jsonb_agg(f.facility_nbr) as facility_nbr
 	FROM auth_user au 
-	LEFT JOIN user_facility uf ON au.id = uf.user_id
+	LEFT JOIN userfacility uf ON au.id = uf.user_id
 	LEFT JOIN facility f ON uf.facility_id  = f.Id
 	WHERE -- Person selecting this is a super user, or p_user_id was not specified
 		(
@@ -37,6 +37,12 @@ DECLARE
 --
 --	p_user_id bigint := 2;
 BEGIN
+
+	IF (SELECT count(*) FROM auth_user auin WHERE auin.is_superuser = TRUE AND auin.id = p_user_id) = 0 THEN
+		RAISE WARNING ''user_id %s does not have super_user permission'', p_user_id;
+		RETURN;
+	END IF;
+
 	-- These drop statements are not required when deployed (they auto drop when out of scope).
 	-- These are here to help when needing to test in a local session.
 	drop table if exists parsed_keys;
@@ -59,13 +65,12 @@ BEGIN
 		''email'' as filter, get_jsonb_values_by_key (json_output, ''email'')::CITEXT as value
 		from parsed_keys;
 
-
 	RETURN QUERY
     SELECT 
         au.username, au.first_name, au.last_name, au.email, au.is_staff, au.is_superuser, au.is_active, au.last_login
         ,jsonb_agg(f.facility_nbr) as facility_nbr
     FROM auth_user au 
-    LEFT JOIN user_facility uf ON au.id = uf.user_id
+    LEFT JOIN userfacility uf ON au.id = uf.user_id
     LEFT JOIN facility f ON uf.facility_id  = f.Id
 	WHERE 
 		(
@@ -87,7 +92,6 @@ BEGIN
 		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''email'' AND au.email = v.value)
 		OR (SELECT count(*) FROM parsed_values v WHERE v.FILTER = ''email'') = 0
 		)
-		AND (au.id = p_user_id OR p_user_id is null)
 	GROUP BY
 		au.username, au.first_name, au.last_name, au.email, au.is_staff, au.is_superuser, au.is_active, au.last_login;
 
@@ -108,6 +112,11 @@ BEGIN
         RAISE WARNING ''Invalid JSONB input: Expected an array but got %'', jsonb_typeof(p_jsonb_in);
         RETURN;
     END IF;
+
+	IF (SELECT count(*) FROM auth_user auin WHERE auin.is_superuser = TRUE AND auin.id = p_user_id) = 0 THEN
+		RAISE WARNING ''user_id %s does not have super_user permission'', p_user_id;
+		RETURN;
+	END IF;
 
 	-- These drop statements are not required when deployed (they auto drop when out of scope).
 	-- These are here to help when needing to test in a local session.
@@ -162,7 +171,7 @@ BEGIN
     SELECT  au.username, au.first_name, au.last_name, au.email, au.is_staff, au.is_superuser, au.is_active, au.last_login
         ,jsonb_agg(f.facility_nbr) as facility_nbr
     FROM auth_user au 
-    LEFT JOIN user_facility uf ON au.id = uf.user_id
+    LEFT JOIN userfacility uf ON au.id = uf.user_id
     LEFT JOIN facility f ON uf.facility_id  = f.Id
 	JOIN update_stage t ON au.id = t.id
 	GROUP BY

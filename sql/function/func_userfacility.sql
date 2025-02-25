@@ -6,7 +6,7 @@ BEGIN
     RETURN QUERY 
     SELECT f.facility_nbr
     FROM auth_user au 
-    JOIN user_facility uf ON au.id = uf.user_id
+    JOIN userfacility uf ON au.id = uf.user_id
     JOIN facility f ON uf.facility_id = f.id
     WHERE au.id = p_user_id;
 END;
@@ -20,7 +20,7 @@ BEGIN
     RETURN QUERY 
     SELECT au.username, jsonb_agg(f.facility_nbr) as facility_nbr
     FROM auth_user au 
-    LEFT JOIN user_facility uf ON au.id = uf.user_id
+    LEFT JOIN userfacility uf ON au.id = uf.user_id
     LEFT JOIN facility f ON uf.facility_id = f.id
 	WHERE -- Person selecting this is a super user, or p_user_id was not specified
 		(
@@ -63,7 +63,7 @@ BEGIN
 	
 	SELECT au.username, jsonb_agg(f.facility_nbr) as facility_nbr
     FROM auth_user au 
-    LEFT JOIN user_facility uf ON au.id = uf.user_id
+    LEFT JOIN userfacility uf ON au.id = uf.user_id
     LEFT JOIN facility f ON uf.facility_id = f.id
 	WHERE 
 		(-- Person selecting this is a super user, or p_user_id was not specified
@@ -91,13 +91,6 @@ CREATE OR REPLACE FUNCTION upsert_userfacility_from_json(
 RETURNS TABLE(username character varying, facility_nbr jsonb) AS ' 
 DECLARE
 BEGIN
-
-	-- Protect against malformed json based on what we are expecting.
-    IF jsonb_typeof(p_jsonb_in) != ''array'' THEN
-        RAISE WARNING ''Invalid JSONB input: Expected an array but got %'', jsonb_typeof(p_jsonb_in);
-        RETURN;
-    END IF;
-
 	IF (SELECT count(*) FROM auth_user auin WHERE auin.is_superuser = TRUE AND auin.id = p_user_id) = 0 THEN
 		RAISE WARNING ''user_id %s does not have super_user permission'', p_user_id;
 		RETURN;
@@ -108,11 +101,19 @@ BEGIN
 	drop table if exists temp_json_data;
 	drop table if exists update_stage;
 
-	CREATE TEMP TABLE temp_json_data AS
-	SELECT 
-		p_jsonb ->> ''username'' AS username,	    
-		p_jsonb ->> ''facility_nbr'' AS facility_nbr
-	FROM jsonb_array_elements(p_jsonb_in::JSONB) AS p_jsonb;
+	-- New table to handle an array of facility_nbr per user.
+    CREATE TEMP TABLE temp_json_data AS
+    SELECT 
+        p_jsonb_in ->> ''username'' AS username,  
+        jsonb_array_elements_text(p_jsonb_in -> ''facility_nbr'') AS facility_nbr
+    ;
+
+	-- OLD TABLE FOR HANDLING a json record for each user.
+	-- CREATE TEMP TABLE temp_json_data AS
+	-- SELECT 
+	-- 	p_jsonb ->> ''username'' AS username,	    
+	-- 	p_jsonb ->> ''facility_nbr'' AS facility_nbr
+	-- FROM jsonb_array_elements(p_jsonb_in::JSONB) AS p_jsonb;
 
 	DELETE from temp_json_data t where t.username IS NULL;
 
@@ -128,15 +129,15 @@ BEGIN
 
 	-- Pre delete all mappings, before adding new mappings.
 	IF p_delete_current_mappings THEN
-		delete from user_facility 
+		delete from userfacility 
 		USING update_stage t
-		where user_facility.user_id = t.user_id;
+		where userfacility.user_id = t.user_id;
 	END IF;
 
-	insert into user_facility (user_id, facility_id, create_ts)
+	insert into userfacility (user_id, facility_id, create_ts)
 	select t.user_id, t.facility_id, now()
 	from update_stage t
-		where not exists (select 1 from user_facility ufin where t.user_id = ufin.user_id and t.facility_id =  ufin.facility_id);
+		where not exists (select 1 from userfacility ufin where t.user_id = ufin.user_id and t.facility_id =  ufin.facility_id);
 
     -- Raise event for consumers
     FOR username IN
@@ -156,7 +157,7 @@ BEGIN
 	(
 		SELECT DISTINCT au.username , f.facility_nbr
 		FROM auth_user au 
-		JOIN user_facility uf ON au.id = uf.user_id
+		JOIN userfacility uf ON au.id = uf.user_id
 		JOIN facility f ON uf.facility_id = f.id
 		JOIN update_stage t ON au.id = t.user_id
 	) q 
@@ -192,23 +193,23 @@ BEGIN
 
 	-- Pre delete all mappings, before adding new mappings.
 	IF p_delete_current_mappings THEN
-		delete from user_facility where user_id = p_user_id;
+		delete from userfacility where user_id = p_user_id;
 	END IF;
 	
-	insert into user_facility (user_id, facility_id, create_ts)
+	insert into userfacility (user_id, facility_id, create_ts)
 	select au.id, f.id, now()
 	from 
 		parsed_values v
 	    JOIN facility f ON v.value = f.facility_nbr
 	    JOIN auth_user au on p_user_id = au.id
-		left join user_facility uf on f.id = uf.facility_id and au.id = uf.user_id
+		left join userfacility uf on f.id = uf.facility_id and au.id = uf.user_id
 	where uf.facility_id is null;
 
     RETURN QUERY
     SELECT 
     au.username, f.facility_nbr, uf.create_ts, uf.update_ts
     FROM 
-    user_facility uf 
+    userfacility uf 
     JOIN facility f ON uf.facility_id = f.id
     JOIN auth_user au on uf.user_id = au.id
     WHERE uf.user_id = p_user_id;  

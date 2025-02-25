@@ -11,7 +11,7 @@ BEGIN
 	FROM 
 		asset asset
     	JOIN facility facility on asset.facility_id = facility.id
-		JOIN user_facility uf on facility.id = uf.facility_id
+		JOIN userfacility uf on facility.id = uf.facility_id
 		JOIN account acc on facility.account_id = acc.id
 	WHERE 
 		(
@@ -83,7 +83,7 @@ BEGIN
 	FROM account acc
 	JOIN facility fac ON acc.id = fac.account_id 
 	JOIN asset a ON fac.id = a.facility_id 
-	JOIN user_facility uf on fac.id = uf.facility_id
+	JOIN userfacility uf on fac.id = uf.facility_id
 	WHERE 
 		(
 		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''account_nbr'' AND acc.account_nbr = v.value)
@@ -170,7 +170,7 @@ BEGIN
 	IF p_user_id IS NOT NULL THEN
 		DELETE from update_stage t
 		WHERE 
-			NOT EXISTS (select 1 FROM user_facility uf WHERE t.facility_id = uf.facility_id AND uf.user_id = p_user_id);
+			NOT EXISTS (select 1 FROM userfacility uf WHERE t.facility_id = uf.facility_id AND uf.user_id = p_user_id);
 	END IF;
 
 	-- Perform UPSERT: Insert new records or update existing ones

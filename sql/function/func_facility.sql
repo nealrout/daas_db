@@ -9,7 +9,7 @@ BEGIN
     SELECT 
 		ac.account_nbr, f.facility_nbr, f.facility_code, f.facility_name, f.create_ts, f.update_ts
 	FROM facility f
-	JOIN user_facility uf on f.id = uf.facility_id
+	JOIN userfacility uf on f.id = uf.facility_id
 	JOIN account ac ON f.account_id = ac.Id
 	WHERE 
 		(
@@ -88,7 +88,7 @@ BEGIN
 		acc.account_nbr, fac.facility_nbr, fac.facility_code, fac.facility_name, fac.create_ts, fac.update_ts
 	FROM account acc
 	JOIN facility fac ON acc.id = fac.account_id 
-	JOIN user_facility uf on fac.id = uf.facility_id
+	JOIN userfacility uf on fac.id = uf.facility_id
 	WHERE 
 		(
 		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''account_nbr'' AND acc.account_nbr = v.value)
@@ -172,7 +172,7 @@ BEGIN
 
 		DELETE from update_stage t
 		WHERE t.facility_id IS NOT NULL 
-			AND	NOT EXISTS (select 1 FROM user_facility uf WHERE t.facility_id = uf.facility_id AND uf.user_id = p_user_id);
+			AND	NOT EXISTS (select 1 FROM userfacility uf WHERE t.facility_id = uf.facility_id AND uf.user_id = p_user_id);
 
 	END IF;
 
@@ -192,9 +192,9 @@ BEGIN
 			VALUES (source.target_account_id, source.facility_nbr, source.facility_code, source.facility_name, now())
 		RETURNING id
 	)
-	INSERT INTO user_facility (user_id, facility_id, create_ts)
+	INSERT INTO userfacility (user_id, facility_id, create_ts)
 	SELECT p_user_id, m.id, now() FROM merged m
-	LEFT JOIN user_facility uf on m.id = uf.facility_id and p_user_id = uf.user_id
+	LEFT JOIN userfacility uf on m.id = uf.facility_id and p_user_id = uf.user_id
 	WHERE uf.facility_id IS NULL;
 
     -- Raise event for consumers

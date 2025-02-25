@@ -17,10 +17,10 @@ BEGIN
     WHERE asset.facility_id = f.id
     AND acc.account_nbr LIKE ''INT_%'';
 
-    DELETE FROM user_facility
+    DELETE FROM userfacility
     USING facility f 
     JOIN account acc ON f.account_id = acc.id
-    WHERE user_facility.facility_id = f.id
+    WHERE userfacility.facility_id = f.id
     AND acc.account_nbr LIKE ''INT_%'';
 
     DELETE FROM facility

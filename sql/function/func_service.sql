@@ -13,7 +13,7 @@ BEGIN
 		JOIN service service on asset.id = service.asset_id
 		JOIN facility facility on asset.facility_id = facility.id
 		JOIN account account on facility.account_id = account.id
-		JOIN user_facility uf on facility.id = uf.facility_id
+		JOIN userfacility uf on facility.id = uf.facility_id
 	WHERE 
 		(
 			(p_source_ts IS NOT NULL AND service.update_ts >= p_source_ts)
@@ -99,7 +99,7 @@ BEGIN
 	JOIN facility fac ON acc.id = fac.account_id 
 	JOIN asset a ON fac.id = a.facility_id 
 	JOIN service s on a.id = s.asset_id
-	JOIN user_facility uf on fac.id = uf.facility_id
+	JOIN userfacility uf on fac.id = uf.facility_id
 	WHERE 
 		(
 		EXISTS (SELECT 1 FROM parsed_values v WHERE v.FILTER = ''account_nbr'' AND acc.account_nbr = v.value)
@@ -200,7 +200,7 @@ BEGIN
 		USING asset a 
 		WHERE t.target_asset_id = a.id
 		AND NOT EXISTS 
-			(select 1 FROM user_facility uf WHERE a.facility_id = uf.facility_id AND uf.user_id = p_user_id);
+			(select 1 FROM userfacility uf WHERE a.facility_id = uf.facility_id AND uf.user_id = p_user_id);
 	END IF;
 
 	-- Perform UPSERT: Insert new records or update existing ones

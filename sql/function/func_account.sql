@@ -10,7 +10,7 @@ BEGIN
 		ac.account_nbr, ac.account_code, ac.account_name, jsonb_agg(f.facility_nbr) as facility_nbr, ac.create_ts, ac.update_ts
 	FROM account ac
 	LEFT JOIN facility f on ac.id = f.account_id
-	LEFT JOIN user_facility uf on f.id = uf.facility_id
+	LEFT JOIN userfacility uf on f.id = uf.facility_id
 		WHERE 
 		(
 			(p_source_ts IS NOT NULL AND ac.update_ts >= p_source_ts)
@@ -70,7 +70,7 @@ BEGIN
 	left join 
 		facility fac on acc.id = fac.account_id
 	left join 
-		user_facility uf on fac.id = uf.facility_id
+		userfacility uf on fac.id = uf.facility_id
 	WHERE 
 		(
 		EXISTS (SELECT 1 FROM parsed_values v WHERE v.filter = ''account_nbr'' AND acc.account_nbr = v.value)
@@ -130,7 +130,7 @@ BEGIN
 		WHERE t.id = f.account_id 
 		AND NOT EXISTS (
 			SELECT 1 
-			FROM user_facility uf 
+			FROM userfacility uf 
 			WHERE uf.facility_id = f.id 
 			AND uf.user_id = p_user_id
 		);

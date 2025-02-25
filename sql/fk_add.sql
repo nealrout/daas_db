@@ -38,9 +38,9 @@ BEGIN
         SELECT 1
         FROM pg_constraint
         WHERE conname = ''fk_facility_id''
-        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''user_facility'')
+        AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''userfacility'')
     ) THEN
-        ALTER TABLE user_facility
+        ALTER TABLE userfacility
         ADD CONSTRAINT fk_facility_id
         FOREIGN KEY (facility_id) REFERENCES facility(id);
         RAISE NOTICE ''Foreign key constraint fk_facility_id has been added.'';
@@ -56,9 +56,9 @@ BEGIN
             SELECT 1
             FROM pg_constraint
             WHERE conname = ''fk_user_id''
-            AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''user_facility'')
+            AND conrelid = (SELECT oid FROM pg_class WHERE relname = ''userfacility'')
         ) THEN
-            ALTER TABLE user_facility
+            ALTER TABLE userfacility
             ADD CONSTRAINT fk_user_id
             FOREIGN KEY (user_id) REFERENCES auth_user(id);
             RAISE NOTICE ''Foreign key constraint fk_user_id has been added.'';

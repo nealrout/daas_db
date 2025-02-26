@@ -86,7 +86,7 @@ END;
 CALL drop_functions_by_name('upsert_userfacility_from_json');
 /
 CREATE OR REPLACE FUNCTION upsert_userfacility_from_json(
-    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint, p_parent_chennel_name TEXT default null, p_delete_current_mappings bool default false
+    p_jsonb_in jsonb, p_channel_name TEXT, p_user_id bigint, p_parent_chennel_name TEXT default null, p_delete_current_mappings bool default true
 ) 
 RETURNS TABLE(username character varying, facility_nbr jsonb) AS ' 
 DECLARE

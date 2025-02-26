@@ -34,8 +34,8 @@
         <sqlFile path="sql/table/table_facility.sql" endDelimiter="/"/>
     </changeSet>
     
-    <changeSet id="table_user_facility" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/table/table_user_facility.sql" endDelimiter="/"/>
+    <changeSet id="table_userfacility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/table/table_userfacility.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="table_asset" author="neal" runAlways="true" context="init">
@@ -86,8 +86,8 @@
         <sqlFile path="sql/row/row_service.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="row_user_facility" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/row/row_user_facility.sql" endDelimiter="/"/>
+    <changeSet id="row_userfacility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/row/row_userfacility.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="fk_add" author="neal" runAlways="true" context="init">
@@ -102,6 +102,10 @@
         <sqlFile path="sql/function/func_log.sql" endDelimiter="/"/>
     </changeSet>
 
+    <changeSet id="func_user" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_user.sql" endDelimiter="/"/>
+    </changeSet>
+
     <changeSet id="func_account" author="neal" runAlways="true" context="init">
         <sqlFile path="sql/function/func_account.sql" endDelimiter="/"/>
     </changeSet>
@@ -114,8 +118,12 @@
         <sqlFile path="sql/function/func_asset.sql" endDelimiter="/"/>
     </changeSet>
 
-    <changeSet id="func_user_facility" author="neal" runAlways="true" context="init">
-        <sqlFile path="sql/function/func_user_facility.sql" endDelimiter="/"/>
+    <changeSet id="func_userfacility" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_userfacility.sql" endDelimiter="/"/>
+    </changeSet>
+
+    <changeSet id="func_auth_user" author="neal" runAlways="true" context="init">
+        <sqlFile path="sql/function/func_auth_user.sql" endDelimiter="/"/>
     </changeSet>
 
     <changeSet id="func_service" author="neal" runAlways="true" context="init">
